@@ -79,6 +79,9 @@ shinyServer(function(input, output) {
         }) %>% Reduce(rbind, .)
     })
     
+    # Create color palette
+    pal <- reactive({colorBin(palette = "BuPu", domain = rate_data()$OVERALL, bins = 8)})
+    
     # Get rates for the current year
     rates <- reactive({
         req(input$year)
@@ -109,7 +112,7 @@ shinyServer(function(input, output) {
             addProviderTiles("CartoDB.PositronOnlyLabels", 
                              options = leafletOptions(pane = "maplabels"),
                              group = "Place names") %>%
-            setView(lng=-118.3, lat=34.1, zoom=10)
+            setView(lng=-118.3, lat=34.1, zoom=10) 
     })
 
     # Add polygons when geodata is loaded
@@ -135,7 +138,12 @@ shinyServer(function(input, output) {
                         ) %>%
             # Uncomment this (here and in color-selection section) to allow toggling between panes
             addLayersControl(overlayGroups = c("Place names", "Rates")) %>%
-            setView(lng=-118.3, lat=34.1, zoom=10)
+            setView(lng=-118.3, lat=34.1, zoom=10) %>%
+            addLegend("bottomleft",
+                      pal = pal(),
+                      values = ~rate_data()$OVERALL,
+                      title = "Hypertension rate",
+                      opacity = 1)
         
     }, priority = 0.5)
     
@@ -144,11 +152,12 @@ shinyServer(function(input, output) {
     observe({
 
         # Set color palette
-        pal <- colorBin(palette = "BuPu", domain = rates(), bins = 8)
+        # pal <- colorBin(palette = "BuPu", domain = rates(), bins = 8)
+        pal_tmp <- pal()
 
         # Custom written function
         # delay(250, js$changeColors(pal(rates())))
-        js$changeColors(pal(rates()))
+        js$changeColors(pal_tmp(rates()))
         
         # # Clear polygons
         # js$clearPolygons()
