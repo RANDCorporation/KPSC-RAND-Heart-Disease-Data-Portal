@@ -53,6 +53,7 @@ dashboardPage(
             menuItem("Map", tabName = "map", icon = icon("map")),
             menuItem("Time-series", tabName = "time-series", icon = icon("chart-line"))
         ),
+        uiOutput("measureControls"),
         uiOutput("geoControls"),
         uiOutput("yearControls")
     ),

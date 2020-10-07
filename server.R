@@ -23,25 +23,42 @@ library(tidyr)
 shinyServer(function(input, output) {
     options(shiny.reactlog = TRUE)
     
+    # measChoices <- c("Hypertension", "Hypertension - controlled", "Hypertension - uncontrolled")
+    # geoChoices <- c("Health District", "Census Designated Place")
+    # # It is assumed that the same set of years is available for each measure/geography
+    # measChoice1 <- measChoices[1]
+    # geoChoice1 <- geoChoices[1]
+    # yearChoices <- list.files(glue("data/Rates_v3/{measChoice1}/{geoChoice1}")) %>% as.numeric
+    
     # Selectors
-    output$geoControls <- renderUI({
-        geoChoices <- c("Health District", "Census Designated Place")
+    output$measureControls <- renderUI({
+        measChoices <- list.files("data/Rates_v3")
         tagList(
-            selectInput("geo", "Geography", choices = geoChoices, selected = geoChoices[1])
+            selectInput("measure", "Measure", choices = measChoices, 
+                        selected = ifelse(is.na(input$measure), measChoices[1], input$measure))
+        )
+    })
+    
+    output$geoControls <- renderUI({
+        measChoice1 <- list.files("data/Rates_v3")[1]
+        geoChoices <- list.files(glue("data/Rates_v3/{measChoice1}"))
+        tagList(
+            selectInput("geo", "Geography", choices = geoChoices, 
+                        selected = ifelse(is.na(input$geo), geoChoices[1], input$geo))
         )
     })
     
     output$yearControls <- renderUI({
+        measChoice1 <- list.files("data/Rates_v3")[1]
+        geoChoice1 <- list.files(glue("data/Rates_v3/{measChoice1}"))[1]
+        yearChoices <- list.files(glue("data/Rates_v3/{measChoice1}/{geoChoice1}")) %>% as.numeric
         tagList(
-            sliderInput("year", "Year", min(yearChoices()), max(yearChoices()), min(yearChoices()), 
+            sliderInput("year", "Year", min=min(yearChoices), max=max(yearChoices), 
+                        value=min(yearChoices),
+                        #value=ifelse(is.na(input$year), min(yearChoices), input$year), 
                         step=1, sep="", ticks=FALSE, 
                         animate=animationOptions(interval=1000))
         )
-    })
-    
-    yearChoices <- reactive({
-        geo <- input$geo
-        list.files(glue("data/Rates_v3/Hypertension/{geo}")) %>% as.numeric
     })
     
     # Read in geodata
@@ -74,8 +91,9 @@ shinyServer(function(input, output) {
     # Read in data across all years
     rate_data <- reactive({
         geo_abb <- input$geo %>% gsub("[a-z]|\\s","",.)
-        lapply(yearChoices(), function(year) {
-            read_excel(glue('data/Rates_v3/Hypertension/{input$geo}/{year}/HBP_{geo_abb}_{year}.xlsx'))
+        yearChoices <- list.files(glue("data/Rates_v3/{input$measure}/{input$geo}")) %>% as.numeric
+        lapply(yearChoices, function(year) {
+            read_excel(glue('data/Rates_v3/{input$measure}/{input$geo}/{year}/HBP_{geo_abb}_{year}.xlsx'))
         }) %>% Reduce(rbind, .)
     })
     
@@ -84,6 +102,7 @@ shinyServer(function(input, output) {
     
     # Get rates for the current year
     rates <- reactive({
+        req(input$measure)
         req(input$year)
         req(input$geo)
         
@@ -124,6 +143,7 @@ shinyServer(function(input, output) {
         # add polygons
         leafletProxy("map", data = geodata()) %>%
             clearShapes() %>%
+            clearControls() %>% 
             addPolygons(layerId = geodata()$GEO_VALUE,
                         group = "Rates",
                         color = "#444444", 
@@ -142,21 +162,22 @@ shinyServer(function(input, output) {
             addLegend("bottomleft",
                       pal = pal(),
                       values = ~rate_data()$OVERALL,
-                      title = "Hypertension rate",
+                      title = "Rate",
                       opacity = 1)
         
-    }, priority = 0.5)
+        pal_tmp <- pal()
+        delay(5, js$changeColors(pal_tmp(rates())))
     
+    })
     
     # Add color when rates change
     observe({
-
+        
         # Set color palette
         # pal <- colorBin(palette = "BuPu", domain = rates(), bins = 8)
         pal_tmp <- pal()
 
         # Custom written function
-        # delay(250, js$changeColors(pal(rates())))
         js$changeColors(pal_tmp(rates()))
         
         # # Clear polygons
@@ -187,6 +208,6 @@ shinyServer(function(input, output) {
         # # Remove old polygons
         # js$removePolygons()
         
-    }, priority = 0)
+    })
     
 })
