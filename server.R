@@ -8,15 +8,18 @@
 #
 
 library(dplyr)
+library(ggplot2)
 library(glue)
 library(haven)
 library(htmltools)
 library(leaflet)
+library(leafpop)
 library(magrittr)
 library(readxl)
 library(sf)
 library(shiny)
 library(shinyjs)
+library(stringr)
 library(tidyr)
 
 # Define server logic
@@ -97,6 +100,18 @@ shinyServer(function(input, output) {
         }) %>% Reduce(rbind, .)
     })
     
+    # Make time series plots
+    # make_plots <- reactive({
+    #     plotlist <- lapply(geodata()$GEO_VALUE, function(gv) {
+    #         rate_data() %>% filter(GEO_VALUE==gv) %>% ggplot(aes(x=YEAR, y=OVERALL)) + geom_line()
+    #     })
+    #     names(plotlist) <- geodata()$GEO_VALUE
+    #     for (i in 1:length(plotlist)) {
+    #         gv <- names(plotlist)[i]
+    #         ggsave(filename=glue('plots/{gv}_{input$measure}.png'), plot=plotlist[[i]])
+    #     }
+    # })
+    
     # Create color palette
     pal <- reactive({colorBin(palette = "BuPu", domain = rate_data()$OVERALL, bins = 8)})
     
@@ -119,6 +134,10 @@ shinyServer(function(input, output) {
         # Return values of the desired variable (currently OVERALL) in the same order as the geographies
         values <- df$OVERALL[match(geodata()$GEO_VALUE, df$GEO_VALUE)]
         return(values)
+    })
+    
+    rates2 <- reactive({
+        str_pad(round(rates(), 2), width=4, side='right', pad='0')
     })
     
     output$map <- renderLeaflet({
@@ -148,7 +167,8 @@ shinyServer(function(input, output) {
                         group = "Rates",
                         color = "#444444", 
                         weight = 0.25, smoothFactor = 0.5,
-                        opacity = 1.0, fillOpacity = 0.0#,
+                        opacity = 1.0, fillOpacity = 0.0,
+                        popup = glue('<p><b>{geodata()$GEO_VALUE}</b><br>{input$measure} rate ({input$year}): {rates2()}</p>')#,
                         #fillColor = ~pal(rates())
                         # highlightOptions = highlightOptions(color = "black",
                         #                                     weight = 2,
