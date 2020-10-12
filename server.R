@@ -8,12 +8,12 @@
 #
 
 library(dplyr)
-library(ggplot2)
 library(glue)
-library(haven)
 library(htmltools)
+library(kableExtra)
+library(knitr) # for kable function
 library(leaflet)
-library(leafpop)
+# library(leafpop)
 library(magrittr)
 library(readxl)
 library(sf)
@@ -100,20 +100,28 @@ shinyServer(function(input, output) {
         }) %>% Reduce(rbind, .)
     })
     
-    # Make time series plots
-    # make_plots <- reactive({
-    #     plotlist <- lapply(geodata()$GEO_VALUE, function(gv) {
-    #         rate_data() %>% filter(GEO_VALUE==gv) %>% ggplot(aes(x=YEAR, y=OVERALL)) + geom_line()
-    #     })
-    #     names(plotlist) <- geodata()$GEO_VALUE
-    #     for (i in 1:length(plotlist)) {
-    #         gv <- names(plotlist)[i]
-    #         ggsave(filename=glue('plots/{gv}_{input$measure}.png'), plot=plotlist[[i]])
-    #     }
-    # })
-    
     # Create color palette
     pal <- reactive({colorBin(palette = "BuPu", domain = rate_data()$OVERALL, bins = 8)})
+    
+    # Create popup table
+    get_popup_table <- reactive({
+        geographies <- unique(as.character(geodata()$GEO_VALUE))
+        df <- data.frame(YEAR=rate_data()$YEAR, 
+                         GEO_VALUE=rate_data()$GEO_VALUE, 
+                         OVERALL=rate_data()$OVERALL) 
+        sapply(geographies, function(gg) {
+            if (sum(df$GEO_VALUE==gg) > 0) {
+                df %>% filter(GEO_VALUE==gg) %>% 
+                    transmute(Year=YEAR, Rate=str_pad(round(OVERALL, 2), width=4, side='right', pad='0')) %>%
+                    kable("html") %>% 
+                    kable_styling(bootstrap_options = c("striped","condensed","responsive")) %>%
+                    as.character %>% 
+                    gsub('\n','',.)   
+            } else {
+                "No data"
+            }
+        })
+    })
     
     # Get rates for the current year
     rates <- reactive({
@@ -153,11 +161,20 @@ shinyServer(function(input, output) {
             setView(lng=-118.3, lat=34.1, zoom=10) 
     })
 
+    # Set the initial map zoom
+    # observe({
+    #     leafletProxy("map", data = geodata()) %>%
+    #         setView(lng=-118.3, lat=34.1, zoom=10)
+    # }, once=TRUE)
+    
     # Add polygons when geodata is loaded
     observe({
 
         # Set color palette
         #pal <- colorBin(palette = "BuPu", domain = rates(), bins = 8)
+        
+        # Get popup table
+        popup_table <- get_popup_table()
         
         # add polygons
         leafletProxy("map", data = geodata()) %>%
@@ -168,7 +185,9 @@ shinyServer(function(input, output) {
                         color = "#444444", 
                         weight = 0.25, smoothFactor = 0.5,
                         opacity = 1.0, fillOpacity = 0.0,
-                        popup = glue('<p><b>{geodata()$GEO_VALUE}</b><br>{input$measure} rate ({input$year}): {rates2()}</p>')#,
+                        popup = glue('<p><b>{geodata()$GEO_VALUE}</b>{popup_table}</p>')
+                        # including a popup that depends on year breaks the animation...
+                        # popup = glue('<p><b>{geodata()$GEO_VALUE}</b><br>{input$measure} rate ({input$year}): {rates2()}</p>')#,
                         #fillColor = ~pal(rates())
                         # highlightOptions = highlightOptions(color = "black",
                         #                                     weight = 2,
@@ -176,9 +195,10 @@ shinyServer(function(input, output) {
                         #                                     #fillOpacity = 1,
                         #                                     bringToFront = FALSE)
                         ) %>%
-            # Uncomment this (here and in color-selection section) to allow toggling between panes
-            addLayersControl(overlayGroups = c("Place names", "Rates")) %>%
-            setView(lng=-118.3, lat=34.1, zoom=10) %>%
+            # Uncomment this to allow toggling between panes
+            # One issue is that if the Rates are unchecked and then checked again, the colors aren't restored
+            # addLayersControl(overlayGroups = c("Place names", "Rates")) %>%
+            # setView(lng=-118.3, lat=34.1, zoom=10) %>%
             addLegend("bottomleft",
                       pal = pal(),
                       values = ~rate_data()$OVERALL,
