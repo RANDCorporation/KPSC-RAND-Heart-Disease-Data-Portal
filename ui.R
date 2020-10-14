@@ -14,7 +14,10 @@ library(leaflet)
 # Custom javascript for clearing the colors
 clearPolygonsJS <- "shinyjs.clearPolygons = function(){
     polygons = document.getElementsByTagName('path');
-    for (i=0; i<polygons.length; i++) polygons[i].setAttribute('fill-opacity',0);
+    for (i=0; i<polygons.length; i++) {
+      polygons[i].setAttribute('opacity',0);
+      polygons[i].setAttribute('fill-opacity',0);
+    }
 }"
 
 removePolygonsJS <- "shinyjs.removePolygons = function(){
@@ -40,7 +43,7 @@ changeColorsJS <- "shinyjs.changeColors = function(params){
     for (i=0; i<polygons.length; i++) {
 	    element = polygons[i];
 	    element.setAttribute('fill',colors[i]);
-	    element.setAttribute('fill-opacity',0.5);
+	    element.setAttribute('fill-opacity',0.6);
     }
 }"
    

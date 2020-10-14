@@ -26,8 +26,8 @@ library(tidyr)
 shinyServer(function(input, output) {
     options(shiny.reactlog = TRUE)
     
-    # measChoices <- c("Hypertension", "Hypertension - controlled", "Hypertension - uncontrolled")
-    # geoChoices <- c("Health District", "Census Designated Place")
+    measChoices <- c("Hypertension", "Hypertension - controlled", "Hypertension - uncontrolled")
+    geoChoices <- c("Health District", "Census Designated Place")
     # # It is assumed that the same set of years is available for each measure/geography
     # measChoice1 <- measChoices[1]
     # geoChoice1 <- geoChoices[1]
@@ -35,7 +35,7 @@ shinyServer(function(input, output) {
     
     # Selectors
     output$measureControls <- renderUI({
-        measChoices <- list.files("data/Rates_v3")
+        # measChoices <- list.files("data/Rates_v3")
         tagList(
             selectInput("measure", "Measure", choices = measChoices, 
                         selected = ifelse(is.na(input$measure), measChoices[1], input$measure))
@@ -44,7 +44,7 @@ shinyServer(function(input, output) {
     
     output$geoControls <- renderUI({
         measChoice1 <- list.files("data/Rates_v3")[1]
-        geoChoices <- list.files(glue("data/Rates_v3/{measChoice1}"))
+        # geoChoices <- list.files(glue("data/Rates_v3/{measChoice1}"))
         tagList(
             selectInput("geo", "Geography", choices = geoChoices, 
                         selected = ifelse(is.na(input$geo), geoChoices[1], input$geo))
@@ -77,9 +77,6 @@ shinyServer(function(input, output) {
             gd <- st_read('data/geodata/HD_2012_WGS84/Health_Districts_2012_WGS84.shp')
             #gd <- st_read('data/geodata/HD_2012_WGS84_noCI/Health_Districts_2012_WGS84_noCI.shp')
             gd %<>% rename(GEO_VALUE = HD_NAME) %>% arrange(GEO_VALUE)
-        } else if (geo=="Census Tract") {
-            gd <- st_read('data/geodata/CT2010_original_WGS84/CT2010_original_WGS84.shp')
-            gd %<>% rename(GEO_VALUE = TRACTCE10) %>% arrange(GEO_VALUE)
         } else if (geo=="Census Designated Place") {
             gd <- st_read('data/geodata/CENSUS_DESIGNATED_PLACES_2010_WGS84/CENSUS_DESIGNATED_PLACES_2010_WGS84.shp')
             gd %<>% rename(GEO_VALUE = NAME) %>% arrange(GEO_VALUE)
@@ -92,6 +89,7 @@ shinyServer(function(input, output) {
     })
     
     # Read in data across all years
+    # Input dependencies: measure, geography
     rate_data <- reactive({
         geo_abb <- input$geo %>% gsub("[a-z]|\\s","",.)
         yearChoices <- list.files(glue("data/Rates_v3/{input$measure}/{input$geo}")) %>% as.numeric
@@ -101,9 +99,11 @@ shinyServer(function(input, output) {
     })
     
     # Create color palette
+    # Input dependencies: measure, geography
     pal <- reactive({colorBin(palette = "BuPu", domain = rate_data()$OVERALL, bins = 8)})
     
     # Create popup table
+    # Input dependencies: measure, geography
     get_popup_table <- reactive({
         geographies <- unique(as.character(geodata()$GEO_VALUE))
         df <- data.frame(YEAR=rate_data()$YEAR, 
@@ -118,16 +118,16 @@ shinyServer(function(input, output) {
                     as.character %>% 
                     gsub('\n','',.)   
             } else {
-                "No data"
+                "<br>No data"
             }
         })
     })
     
     # Get rates for the current year
+    # Input dependencies: measure, geography, year
     rates <- reactive({
-        req(input$measure)
-        req(input$year)
-        req(input$geo)
+        # If Shiny tries to proceed with any of these missing, it'll throw an error and the app will break.
+        req(input$measure, input$geo, input$year)
         
         # Set parameters for determining which data to pull
         # year <- input$year
@@ -160,31 +160,27 @@ shinyServer(function(input, output) {
                              group = "Place names") %>%
             setView(lng=-118.3, lat=34.1, zoom=10) 
     })
-
-    # Set the initial map zoom
-    # observe({
-    #     leafletProxy("map", data = geodata()) %>%
-    #         setView(lng=-118.3, lat=34.1, zoom=10)
-    # }, once=TRUE)
     
     # Add polygons when geodata is loaded
+    # Input dependencies: measure, geography (measure is only necessary for the popup info)
     observe({
 
-        # Set color palette
-        #pal <- colorBin(palette = "BuPu", domain = rates(), bins = 8)
+        # Clear any existing polygons 
+        # (this doesn't remove them per se but rather makes them invisible, which makes the transition look better)
+        js$clearPolygons()
         
         # Get popup table
         popup_table <- get_popup_table()
         
-        # add polygons
+        # Add polygons
         leafletProxy("map", data = geodata()) %>%
             clearShapes() %>%
-            clearControls() %>% 
             addPolygons(layerId = geodata()$GEO_VALUE,
                         group = "Rates",
                         color = "#444444", 
                         weight = 0.25, smoothFactor = 0.5,
                         opacity = 1.0, fillOpacity = 0.0,
+                        #popup = glue('<p><b>{geodata()$GEO_VALUE}</p>')
                         popup = glue('<p><b>{geodata()$GEO_VALUE}</b>{popup_table}</p>')
                         # including a popup that depends on year breaks the animation...
                         # popup = glue('<p><b>{geodata()$GEO_VALUE}</b><br>{input$measure} rate ({input$year}): {rates2()}</p>')#,
@@ -194,59 +190,52 @@ shinyServer(function(input, output) {
                         #                                     #fillColor = "white",
                         #                                     #fillOpacity = 1,
                         #                                     bringToFront = FALSE)
-                        ) %>%
+                        ) #%>%
             # Uncomment this to allow toggling between panes
             # One issue is that if the Rates are unchecked and then checked again, the colors aren't restored
             # addLayersControl(overlayGroups = c("Place names", "Rates")) %>%
             # setView(lng=-118.3, lat=34.1, zoom=10) %>%
+            # addLegend("bottomleft",
+            #           pal = pal(),
+            #           values = ~rate_data()$OVERALL,
+            #           title = "Rate",
+            #           opacity = 0.6)
+        
+        # Add the proper shading
+        # pal_tmp <- pal()
+        # delay(10, js$changeColors(pal_tmp(rates())))
+    
+    })
+    
+    # Add legend and color
+    # Input dependencies: measure, geography, year
+    observe({
+        
+        # Add polygons
+        delay(5, leafletProxy("map", data = geodata()) %>%
+            clearControls() %>% 
             addLegend("bottomleft",
                       pal = pal(),
                       values = ~rate_data()$OVERALL,
                       title = "Rate",
-                      opacity = 1)
+                      opacity = 0.6))
         
+        # Add the proper shading
         pal_tmp <- pal()
-        delay(5, js$changeColors(pal_tmp(rates())))
-    
+        delay(10, js$changeColors(pal_tmp(rates())))
+        
     })
     
     # Add color when rates change
+    # (this bit is only useful for the animation)
+    # Input dependencies: measure, geography, year
     observe({
         
         # Set color palette
-        # pal <- colorBin(palette = "BuPu", domain = rates(), bins = 8)
         pal_tmp <- pal()
 
         # Custom written function
         js$changeColors(pal_tmp(rates()))
-        
-        # # Clear polygons
-        # js$clearPolygons()
-        # 
-        # # update map
-        # leafletProxy("map", data = geodata()) %>%
-        #     addPolygons(layerId = geodata()$GEO_VALUE,
-        #                 group = "Rates",
-        #                 color = "#444444", weight = 0.25, smoothFactor = 0.5,
-        #                 opacity = 1.0, fillOpacity = 0.5,
-        #                 fillColor = ~pal(rates()),
-        #                 popup = ~htmlEscape(paste0(GEO_VALUE,': ',round(rates(),2))),
-        #                 highlightOptions = highlightOptions(color = "black",
-        #                                                     weight = 2,
-        #                                                     #fillColor = "white",
-        #                                                     #fillOpacity = 0,
-        #                                                     bringToFront = TRUE))  %>%
-        #     clearControls() %>%
-        #     # Uncomment this (here and in geo-selection section) to allow toggling between panes
-        #     #addLayersControl(overlayGroups = c("Place names", "Rates")) %>%
-        #     addLegend("bottomleft",
-        #               pal = pal,
-        #               values = ~rates(),
-        #               title = "Hypertension rate",
-        #               opacity = 1)
-        # 
-        # # Remove old polygons
-        # js$removePolygons()
         
     })
     
