@@ -8,12 +8,13 @@
 #
 
 library(dplyr)
+library(ggplot2)
 library(glue)
 library(htmltools)
 library(kableExtra)
 library(knitr) # for kable function
 library(leaflet)
-# library(leafpop)
+library(leafpop)
 library(magrittr)
 library(readxl)
 library(sf)
@@ -123,6 +124,33 @@ shinyServer(function(input, output) {
         })
     })
     
+    # Create popup graphs
+    # Input dependencies: measure, geography
+    get_popup_graphs <- reactive({
+        geographies <- unique(as.character(geodata()$GEO_VALUE))
+        
+        df <- data.frame(YEAR=rate_data()$YEAR, 
+                         GEO_VALUE=rate_data()$GEO_VALUE, 
+                         OVERALL=rate_data()$OVERALL) 
+        
+        ymin <- min(rate_data()$OVERALL, na.rm=TRUE)
+        ymax <- max(rate_data()$OVERALL, na.rm=TRUE)
+        
+        lapply(geographies, function(gg) {
+            if (sum(df$GEO_VALUE==gg) > 0) {
+                df %>% 
+                    filter(GEO_VALUE==gg) %>% 
+                    ggplot(aes(x=YEAR, y=OVERALL)) + 
+                    geom_line() +
+                    ylim(ymin, ymax) + 
+                    theme_minimal() + 
+                    labs(title = gg)
+            } else {
+                data.frame(x=1,y=1,z="No data available") %>% ggplot(aes(x=x,y=y,label=z)) + geom_label() + theme_void()
+            }
+        })
+    })
+    
     # Get rates for the current year
     # Input dependencies: measure, geography, year
     rates <- reactive({
@@ -172,6 +200,15 @@ shinyServer(function(input, output) {
         # Get popup table
         popup_table <- get_popup_table()
         
+        # Get popup graphs
+        myplots <- get_popup_graphs()
+        
+        # mydata <- data.frame(x=rnorm(100))
+        # myplot <- list()
+        # for (i in 1:length(unique(geodata()$GEO_VALUE))) {
+        #     myplot[[i]] <- list(ggplot(mydata, aes(x=x)) + geom_histogram())
+        # }
+        
         # Add polygons
         leafletProxy("map", data = geodata()) %>%
             clearShapes() %>%
@@ -180,8 +217,9 @@ shinyServer(function(input, output) {
                         color = "#444444", 
                         weight = 0.25, smoothFactor = 0.5,
                         opacity = 1.0, fillOpacity = 0.0,
-                        #popup = glue('<p><b>{geodata()$GEO_VALUE}</p>')
-                        popup = glue('<p><b>{geodata()$GEO_VALUE}</b>{popup_table}</p>')
+                        # popup = glue('<p><b>{geodata()$GEO_VALUE}</p>')
+                        # popup = glue('<p><b>{geodata()$GEO_VALUE}</b>{popup_table}</p>')
+                        # popup = "<img src = 'plots/testplot.png'>"
                         # including a popup that depends on year breaks the animation...
                         # popup = glue('<p><b>{geodata()$GEO_VALUE}</b><br>{input$measure} rate ({input$year}): {rates2()}</p>')#,
                         #fillColor = ~pal(rates())
@@ -190,7 +228,9 @@ shinyServer(function(input, output) {
                         #                                     #fillColor = "white",
                         #                                     #fillOpacity = 1,
                         #                                     bringToFront = FALSE)
-                        ) #%>%
+                        ) %>%
+            addPopupGraphs(myplots, group="Rates")
+        # browser()
             # Uncomment this to allow toggling between panes
             # One issue is that if the Rates are unchecked and then checked again, the colors aren't restored
             # addLayersControl(overlayGroups = c("Place names", "Rates")) %>%
