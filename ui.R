@@ -52,10 +52,10 @@ dashboardPage(
     ## Sidebar content
     dashboardSidebar(
         width = 300,
-        sidebarMenu(
-            menuItem("Map", tabName = "map", icon = icon("map")),
-            menuItem("Time-series", tabName = "time-series", icon = icon("chart-line"))
-        ),
+        # sidebarMenu(
+        #     menuItem("Map", tabName = "map", icon = icon("map")),
+            # menuItem("Time-series", tabName = "time-series", icon = icon("chart-line"))
+        # ),
         uiOutput("measureControls"),
         uiOutput("geoControls"),
         uiOutput("yearControls")
@@ -66,26 +66,35 @@ dashboardPage(
         extendShinyjs(text=clearPolygonsJS, functions="clearPolygons"),
         extendShinyjs(text=removePolygonsJS, functions="removePolygons"),
         extendShinyjs(text=changeColorsJS, functions="changeColors"),
-        tabItems(
-            # First tab content
-            tabItem(tabName = "map",
-                    fillPage(
-                        tags$style(type = "text/css", "#map {height: calc(100vh - 80px) !important;} #geoSelect {height: calc(100vh - 100px) !important;}"),
-                        fillRow(flex=c(4,1),
-                            leafletOutput('map', width="99%", height="100%")#,
-                            #box(uiOutput("geoSelect"), width="100%", height="95%", solidHeader = TRUE)
-                        )
-                    )
-                    #fillPage(
-                    #    tags$style(type = "text/css", "#plot1 {height: calc(100vh - 80px) !important;}"),
-                    #    leafletOutput('plot1', height = "100%", width = "100%")
-                    #)
-            ),
-            
-            # Second tab content
-            tabItem(tabName = "time-series",
-                    h2("Time-series tab content")
+        fluidRow(
+          fillPage(
+            tags$style(type = "text/css", "#map {height: calc(100vh - 80px) !important;} #geoSelect {height: calc(100vh - 100px) !important;}"),
+            fillRow(flex=c(4,1),
+                  leafletOutput('map', width="99%", height="100%")#,
+                  #box(uiOutput("geoSelect"), width="100%", height="95%", solidHeader = TRUE)
             )
+          )
         )
+        # tabItems(
+        #     # First tab content
+        #     tabItem(tabName = "map",
+        #             fillPage(
+        #                 tags$style(type = "text/css", "#map {height: calc(100vh - 80px) !important;} #geoSelect {height: calc(100vh - 100px) !important;}"),
+        #                 fillRow(flex=c(4,1),
+        #                     leafletOutput('map', width="99%", height="100%")#,
+        #                     #box(uiOutput("geoSelect"), width="100%", height="95%", solidHeader = TRUE)
+        #                 )
+        #             )
+        #             #fillPage(
+        #             #    tags$style(type = "text/css", "#plot1 {height: calc(100vh - 80px) !important;}"),
+        #             #    leafletOutput('plot1', height = "100%", width = "100%")
+        #             #)
+        #     ),
+        #     
+        #     # Second tab content
+        #     tabItem(tabName = "time-series",
+        #             h2("Time-series tab content")
+        #     )
+        # )
     )
 )
