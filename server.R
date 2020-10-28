@@ -105,48 +105,61 @@ shinyServer(function(input, output) {
     
     # Create popup table
     # Input dependencies: measure, geography
-    get_popup_table <- reactive({
-        geographies <- unique(as.character(geodata()$GEO_VALUE))
-        df <- data.frame(YEAR=rate_data()$YEAR, 
-                         GEO_VALUE=rate_data()$GEO_VALUE, 
-                         OVERALL=rate_data()$OVERALL) 
-        sapply(geographies, function(gg) {
-            if (sum(df$GEO_VALUE==gg) > 0) {
-                df %>% filter(GEO_VALUE==gg) %>% 
-                    transmute(Year=YEAR, Rate=str_pad(round(OVERALL, 2), width=4, side='right', pad='0')) %>%
-                    kable("html") %>% 
-                    kable_styling(bootstrap_options = c("striped","condensed","responsive")) %>%
-                    as.character %>% 
-                    gsub('\n','',.)   
-            } else {
-                "<br>No data"
-            }
-        })
-    })
+    # get_popup_table <- reactive({
+    #     geographies <- unique(as.character(geodata()$GEO_VALUE))
+    #     df <- data.frame(YEAR=rate_data()$YEAR, 
+    #                      GEO_VALUE=rate_data()$GEO_VALUE, 
+    #                      OVERALL=rate_data()$OVERALL) 
+    #     sapply(geographies, function(gg) {
+    #         if (sum(df$GEO_VALUE==gg) > 0) {
+    #             df %>% filter(GEO_VALUE==gg) %>% 
+    #                 transmute(Year=YEAR, Rate=str_pad(round(OVERALL, 2), width=4, side='right', pad='0')) %>%
+    #                 kable("html") %>% 
+    #                 kable_styling(bootstrap_options = c("striped","condensed","responsive")) %>%
+    #                 as.character %>% 
+    #                 gsub('\n','',.)   
+    #         } else {
+    #             "<br>No data"
+    #         }
+    #     })
+    # })
     
     # Create popup graphs
     # Input dependencies: measure, geography
     get_popup_graphs <- reactive({
-        geographies <- unique(as.character(geodata()$GEO_VALUE))
+        # geographies <- unique(as.character(geodata()$GEO_VALUE))
+        geographies <- levels(geodata()$GEO_VALUE)
         
-        df <- data.frame(YEAR=rate_data()$YEAR, 
-                         GEO_VALUE=rate_data()$GEO_VALUE, 
-                         OVERALL=rate_data()$OVERALL) 
+        # df <- data.frame(YEAR=rate_data()$YEAR, 
+        #                  GEO_VALUE=rate_data()$GEO_VALUE, 
+        #                  OVERALL=rate_data()$OVERALL) 
         
         ymin <- min(rate_data()$OVERALL, na.rm=TRUE)
         ymax <- max(rate_data()$OVERALL, na.rm=TRUE)
         
         lapply(geographies, function(gg) {
-            if (sum(df$GEO_VALUE==gg) > 0) {
-                df %>% 
-                    filter(GEO_VALUE==gg) %>% 
-                    ggplot(aes(x=YEAR, y=OVERALL)) + 
+            # if (sum(df$GEO_VALUE==gg) > 0) {
+            #     df %>%
+            #         filter(GEO_VALUE==gg) %>%
+            #         ggplot(aes(x=YEAR, y=OVERALL)) +
+            #         geom_line() +
+            #         ylim(ymin, ymax) +
+            #         theme_minimal() +
+            #         labs(title = gg)
+            if (gg %in% rate_data()$GEO_VALUE) {
+                rate_data() %>%
+                    filter(GEO_VALUE==gg) %>%
+                    ggplot(aes(x=YEAR, y=OVERALL)) +
                     geom_line() +
-                    ylim(ymin, ymax) + 
-                    theme_minimal() + 
+                    ylim(ymin, ymax) +
+                    theme_minimal() +
                     labs(title = gg)
             } else {
-                data.frame(x=1,y=1,z="No data available") %>% ggplot(aes(x=x,y=y,label=z)) + geom_label() + theme_void()
+                data.frame(x=1,y=1,z="No data available") %>%
+                    ggplot(aes(x=x,y=y,label=z)) +
+                    geom_label() +
+                    theme_void() + 
+                    labs(title = gg)
             }
         })
     })
@@ -172,9 +185,9 @@ shinyServer(function(input, output) {
         return(values)
     })
     
-    rates2 <- reactive({
-        str_pad(round(rates(), 2), width=4, side='right', pad='0')
-    })
+    # rates2 <- reactive({
+    #     str_pad(round(rates(), 2), width=4, side='right', pad='0')
+    # })
     
     output$map <- renderLeaflet({
         # Create plot
@@ -198,7 +211,7 @@ shinyServer(function(input, output) {
         js$clearPolygons()
         
         # Get popup table
-        popup_table <- get_popup_table()
+        # popup_table <- get_popup_table()
         
         # Get popup graphs
         myplots <- get_popup_graphs()
