@@ -29,6 +29,7 @@ shinyServer(function(input, output) {
     
     measChoices <- c("Hypertension", "Hypertension - controlled", "Hypertension - uncontrolled")
     geoChoices <- c("Health District", "Census Designated Place")
+    # geoChoices <- c("Census Designated Place", "Health District")
     # # It is assumed that the same set of years is available for each measure/geography
     # measChoice1 <- measChoices[1]
     # geoChoice1 <- geoChoices[1]
@@ -126,43 +127,34 @@ shinyServer(function(input, output) {
     
     # Create popup graphs
     # Input dependencies: measure, geography
-    get_popup_graphs <- reactive({
-        # geographies <- unique(as.character(geodata()$GEO_VALUE))
-        geographies <- levels(geodata()$GEO_VALUE)
-        
-        # df <- data.frame(YEAR=rate_data()$YEAR, 
-        #                  GEO_VALUE=rate_data()$GEO_VALUE, 
-        #                  OVERALL=rate_data()$OVERALL) 
-        
-        ymin <- min(rate_data()$OVERALL, na.rm=TRUE)
-        ymax <- max(rate_data()$OVERALL, na.rm=TRUE)
-        
-        lapply(geographies, function(gg) {
-            # if (sum(df$GEO_VALUE==gg) > 0) {
-            #     df %>%
-            #         filter(GEO_VALUE==gg) %>%
-            #         ggplot(aes(x=YEAR, y=OVERALL)) +
-            #         geom_line() +
-            #         ylim(ymin, ymax) +
-            #         theme_minimal() +
-            #         labs(title = gg)
-            if (gg %in% rate_data()$GEO_VALUE) {
-                rate_data() %>%
-                    filter(GEO_VALUE==gg) %>%
-                    ggplot(aes(x=YEAR, y=OVERALL)) +
-                    geom_line() +
-                    ylim(ymin, ymax) +
-                    theme_minimal() +
-                    labs(title = gg)
-            } else {
-                data.frame(x=1,y=1,z="No data available") %>%
-                    ggplot(aes(x=x,y=y,label=z)) +
-                    geom_label() +
-                    theme_void() + 
-                    labs(title = gg)
-            }
-        })
-    })
+    # get_popup_graphs <- reactive({
+    #     geographies <- levels(geodata()$GEO_VALUE)
+    # 
+    #     ymin <- min(rate_data()$OVERALL, na.rm=TRUE)
+    #     ymax <- max(rate_data()$OVERALL, na.rm=TRUE)
+    # 
+    #     lapply(geographies, function(gg) {
+    #         if (gg %in% rate_data()$GEO_VALUE) {
+    #             myplot <- rate_data() %>%
+    #                 filter(GEO_VALUE==gg) %>%
+    #                 ggplot(aes(x=YEAR, y=OVERALL)) +
+    #                 geom_line() +
+    #                 ylim(ymin, ymax) +
+    #                 theme_minimal() +
+    #                 labs(title = gg)
+    #             ggsave(glue('plots/{input$measure}/{input$geo}/{gg}.png'), width=4, height=4, dpi=75)
+    #             myplot
+    #         } else {
+    #             myplot <- data.frame(x=1,y=1,z="No data available") %>%
+    #                 ggplot(aes(x=x,y=y,label=z)) +
+    #                 geom_label() +
+    #                 theme_void() +
+    #                 labs(title = gg)
+    #             ggsave(glue('plots/{input$measure}/{input$geo}/{gg}.png'), width=4, height=4, dpi=75)
+    #             myplot
+    #         }
+    #     })
+    # })
     
     # Get rates for the current year
     # Input dependencies: measure, geography, year
@@ -202,6 +194,11 @@ shinyServer(function(input, output) {
             setView(lng=-118.3, lat=34.1, zoom=10) 
     })
     
+    # observe({
+    #     system('rm plots/tmp/*.png')
+    #     system(glue('cp plots/{input$measure}/{input$geo}/{gg}.png plots/tmp/popup_plot.png'))
+    # })
+    
     # Add polygons when geodata is loaded
     # Input dependencies: measure, geography (measure is only necessary for the popup info)
     observe({
@@ -210,17 +207,17 @@ shinyServer(function(input, output) {
         # (this doesn't remove them per se but rather makes them invisible, which makes the transition look better)
         js$clearPolygons()
         
+        # Clear any existing popups
+        # leafletProxy("map", data = geodata()) %>% leaflet::invokeMethod(data, "clearPopups")
+        
         # Get popup table
         # popup_table <- get_popup_table()
         
         # Get popup graphs
-        myplots <- get_popup_graphs()
+        # myplots <- get_popup_graphs()
         
-        # mydata <- data.frame(x=rnorm(100))
-        # myplot <- list()
-        # for (i in 1:length(unique(geodata()$GEO_VALUE))) {
-        #     myplot[[i]] <- list(ggplot(mydata, aes(x=x)) + geom_histogram())
-        # }
+        myplots <- lapply(levels(geodata()$GEO_VALUE), function(gg) glue('plots/{input$measure}/{input$geo}/{gg}.png'))
+        # myplots <- lapply(levels(geodata()$GEO_VALUE), function(gg) glue('plots/tmp/{gg}.png'))
         
         # Add polygons
         leafletProxy("map", data = geodata()) %>%
@@ -242,8 +239,9 @@ shinyServer(function(input, output) {
                         #                                     #fillOpacity = 1,
                         #                                     bringToFront = FALSE)
                         ) %>%
-            addPopupGraphs(myplots, group="Rates")
-        # browser()
+            addPopupImages(myplots, group="Rates")
+            # addPopupGraphs(myplots, group="Rates")
+
             # Uncomment this to allow toggling between panes
             # One issue is that if the Rates are unchecked and then checked again, the colors aren't restored
             # addLayersControl(overlayGroups = c("Place names", "Rates")) %>%
@@ -253,10 +251,6 @@ shinyServer(function(input, output) {
             #           values = ~rate_data()$OVERALL,
             #           title = "Rate",
             #           opacity = 0.6)
-        
-        # Add the proper shading
-        # pal_tmp <- pal()
-        # delay(10, js$changeColors(pal_tmp(rates())))
     
     })
     
