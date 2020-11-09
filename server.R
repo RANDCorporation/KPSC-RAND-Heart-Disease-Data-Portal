@@ -7,33 +7,9 @@
 #    http://shiny.rstudio.com/
 #
 
-library(dplyr)
-library(ggplot2)
-library(glue)
-library(htmltools)
-library(kableExtra)
-library(knitr) # for kable function
-library(leaflet)
-library(leafpop)
-library(magrittr)
-library(readxl)
-library(sf)
-library(shiny)
-library(shinyjs)
-library(stringr)
-library(tidyr)
-
 # Define server logic
 shinyServer(function(input, output) {
     options(shiny.reactlog = TRUE)
-    
-    measChoices <- c("Hypertension", "Hypertension - controlled", "Hypertension - uncontrolled")
-    geoChoices <- c("Health District", "Census Designated Place")
-    # geoChoices <- c("Census Designated Place", "Health District")
-    # # It is assumed that the same set of years is available for each measure/geography
-    # measChoice1 <- measChoices[1]
-    # geoChoice1 <- geoChoices[1]
-    # yearChoices <- list.files(glue("data/Rates_v3/{measChoice1}/{geoChoice1}")) %>% as.numeric
     
     # Selectors
     output$measureControls <- renderUI({
@@ -104,27 +80,6 @@ shinyServer(function(input, output) {
     # Input dependencies: measure, geography
     pal <- reactive({colorBin(palette = "BuPu", domain = rate_data()$OVERALL, bins = 8)})
     
-    # Create popup table
-    # Input dependencies: measure, geography
-    # get_popup_table <- reactive({
-    #     geographies <- unique(as.character(geodata()$GEO_VALUE))
-    #     df <- data.frame(YEAR=rate_data()$YEAR, 
-    #                      GEO_VALUE=rate_data()$GEO_VALUE, 
-    #                      OVERALL=rate_data()$OVERALL) 
-    #     sapply(geographies, function(gg) {
-    #         if (sum(df$GEO_VALUE==gg) > 0) {
-    #             df %>% filter(GEO_VALUE==gg) %>% 
-    #                 transmute(Year=YEAR, Rate=str_pad(round(OVERALL, 2), width=4, side='right', pad='0')) %>%
-    #                 kable("html") %>% 
-    #                 kable_styling(bootstrap_options = c("striped","condensed","responsive")) %>%
-    #                 as.character %>% 
-    #                 gsub('\n','',.)   
-    #         } else {
-    #             "<br>No data"
-    #         }
-    #     })
-    # })
-    
     # Create popup graphs
     # Input dependencies: measure, geography
     # get_popup_graphs <- reactive({
@@ -194,11 +149,6 @@ shinyServer(function(input, output) {
             setView(lng=-118.3, lat=34.1, zoom=10) 
     })
     
-    # observe({
-    #     system('rm plots/tmp/*.png')
-    #     system(glue('cp plots/{input$measure}/{input$geo}/{gg}.png plots/tmp/popup_plot.png'))
-    # })
-    
     # Add polygons when geodata is loaded
     # Input dependencies: measure, geography (measure is only necessary for the popup info)
     observe({
@@ -210,14 +160,10 @@ shinyServer(function(input, output) {
         # Clear any existing popups
         # leafletProxy("map", data = geodata()) %>% leaflet::invokeMethod(data, "clearPopups")
         
-        # Get popup table
-        # popup_table <- get_popup_table()
-        
         # Get popup graphs
         # myplots <- get_popup_graphs()
         
         myplots <- lapply(levels(geodata()$GEO_VALUE), function(gg) glue('plots/{input$measure}/{input$geo}/{gg}.png'))
-        # myplots <- lapply(levels(geodata()$GEO_VALUE), function(gg) glue('plots/tmp/{gg}.png'))
         
         # Add polygons
         leafletProxy("map", data = geodata()) %>%
@@ -226,21 +172,8 @@ shinyServer(function(input, output) {
                         group = "Rates",
                         color = "#444444", 
                         weight = 0.25, smoothFactor = 0.5,
-                        opacity = 1.0, fillOpacity = 0.0,
-                        # popup = glue('<p><b>{geodata()$GEO_VALUE}</p>')
-                        # popup = glue('<p><b>{geodata()$GEO_VALUE}</b>{popup_table}</p>')
-                        # popup = "<img src = 'plots/testplot.png'>"
-                        # including a popup that depends on year breaks the animation...
-                        # popup = glue('<p><b>{geodata()$GEO_VALUE}</b><br>{input$measure} rate ({input$year}): {rates2()}</p>')#,
-                        #fillColor = ~pal(rates())
-                        # highlightOptions = highlightOptions(color = "black",
-                        #                                     weight = 2,
-                        #                                     #fillColor = "white",
-                        #                                     #fillOpacity = 1,
-                        #                                     bringToFront = FALSE)
-                        ) %>%
+                        opacity = 1.0, fillOpacity = 0.0) %>%
             addPopupImages(myplots, group="Rates")
-            # addPopupGraphs(myplots, group="Rates")
 
             # Uncomment this to allow toggling between panes
             # One issue is that if the Rates are unchecked and then checked again, the colors aren't restored
