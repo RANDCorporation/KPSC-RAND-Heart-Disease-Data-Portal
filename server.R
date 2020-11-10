@@ -9,14 +9,15 @@
 
 # Define server logic
 shinyServer(function(input, output) {
-    options(shiny.reactlog = TRUE)
+    # options(shiny.reactlog = TRUE)
     
     # Selectors
     output$measureControls <- renderUI({
         # measChoices <- list.files("data/Rates_v3")
         tagList(
             selectInput("measure", "Measure", choices = measChoices, 
-                        selected = ifelse(is.na(input$measure), measChoices[1], input$measure))
+                        selected = measChoices[1])
+                        # selected = ifelse(is.na(input$measure), measChoices[1], input$measure))
         )
     })
     
@@ -25,13 +26,14 @@ shinyServer(function(input, output) {
         # geoChoices <- list.files(glue("data/Rates_v3/{measChoice1}"))
         tagList(
             selectInput("geo", "Geography", choices = geoChoices, 
-                        selected = ifelse(is.na(input$geo), geoChoices[1], input$geo))
+                        selected = geoChoices[1])
+                        # selected = ifelse(is.na(input$geo), geoChoices[1], input$geo))
         )
     })
     
     output$yearControls <- renderUI({
-        measChoice1 <- list.files("data/Rates_v3")[1]
-        geoChoice1 <- list.files(glue("data/Rates_v3/{measChoice1}"))[1]
+        measChoice1 <- measChoices[1]
+        geoChoice1 <- geoChoices[1]
         yearChoices <- list.files(glue("data/Rates_v3/{measChoice1}/{geoChoice1}")) %>% as.numeric
         tagList(
             sliderInput("year", "Year", min=min(yearChoices), max=max(yearChoices), 
@@ -44,6 +46,7 @@ shinyServer(function(input, output) {
     
     # Read in geodata
     geodata <- reactive({
+            
         req(input$geo)
         # Set parameters for determining which data to pull
         geo <- input$geo
@@ -118,23 +121,15 @@ shinyServer(function(input, output) {
         req(input$measure, input$geo, input$year)
         
         # Set parameters for determining which data to pull
-        # year <- input$year
-        # geo <- input$geo
         geo_abb <- input$geo %>% gsub("[a-z]|\\s","",.)
         
-        # Read in the appropriate Excel file
-        # rates_filepath <- glue('data/Rates_v3/Hypertension/{geo}/{year}/HBP_{geo_abb}_{year}.xlsx')
-        # df <- read_excel(rates_filepath) %>% arrange(GEO_VALUE)
+        # Filter rate data to the selected year
         df <- rate_data() %>% filter(YEAR==input$year)
         
         # Return values of the desired variable (currently OVERALL) in the same order as the geographies
         values <- df$OVERALL[match(geodata()$GEO_VALUE, df$GEO_VALUE)]
         return(values)
     })
-    
-    # rates2 <- reactive({
-    #     str_pad(round(rates(), 2), width=4, side='right', pad='0')
-    # })
     
     output$map <- renderLeaflet({
         # Create plot
@@ -162,7 +157,6 @@ shinyServer(function(input, output) {
         
         # Get popup graphs
         # myplots <- get_popup_graphs()
-        
         myplots <- lapply(levels(geodata()$GEO_VALUE), function(gg) glue('plots/{input$measure}/{input$geo}/{gg}.png'))
         
         # Add polygons
@@ -173,17 +167,25 @@ shinyServer(function(input, output) {
                         color = "#444444", 
                         weight = 0.25, smoothFactor = 0.5,
                         opacity = 1.0, fillOpacity = 0.0) %>%
-            addPopupImages(myplots, group="Rates")
+            addPopupImages(myplots, group="Rates") %>%
+            clearControls() %>% 
+            addLegend("bottomleft",
+                      pal = pal(),
+                      values = ~rate_data()$OVERALL,
+                      title = "Rate",
+                      opacity = 0.6)
+        
+        # Uncomment this to allow toggling between panes
+        # One issue is that if the Rates are unchecked and then checked again, the colors aren't restored
+        # addLayersControl(overlayGroups = c("Place names", "Rates")) %>%
+        # setView(lng=-118.3, lat=34.1, zoom=10) %>%
+        # addLegend("bottomleft",
+        #           pal = pal(),
+        #           values = ~rate_data()$OVERALL,
+        #           title = "Rate",
+        #           opacity = 0.6)
 
-            # Uncomment this to allow toggling between panes
-            # One issue is that if the Rates are unchecked and then checked again, the colors aren't restored
-            # addLayersControl(overlayGroups = c("Place names", "Rates")) %>%
-            # setView(lng=-118.3, lat=34.1, zoom=10) %>%
-            # addLegend("bottomleft",
-            #           pal = pal(),
-            #           values = ~rate_data()$OVERALL,
-            #           title = "Rate",
-            #           opacity = 0.6)
+
     
     })
     
@@ -191,19 +193,19 @@ shinyServer(function(input, output) {
     # Input dependencies: measure, geography, year
     observe({
         
-        # Add polygons
+        # Add legend
         delay(5, leafletProxy("map", data = geodata()) %>%
-            clearControls() %>% 
-            addLegend("bottomleft",
-                      pal = pal(),
-                      values = ~rate_data()$OVERALL,
-                      title = "Rate",
-                      opacity = 0.6))
+                  clearControls() %>%
+                  addLegend("bottomleft",
+                            pal = pal(),
+                            values = ~rate_data()$OVERALL,
+                            title = "Rate",
+                            opacity = 0.6))
         
         # Add the proper shading
         pal_tmp <- pal()
         delay(10, js$changeColors(pal_tmp(rates())))
-        
+
     })
     
     # Add color when rates change

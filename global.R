@@ -23,6 +23,7 @@ library(tidyr)
 # selection choices for measure and geography
 measChoices <- c("Hypertension", "Hypertension - controlled", "Hypertension - uncontrolled")
 geoChoices <- c("Health District", "Census Designated Place")
+# geoChoices <- c("Census Designated Place", "Health District")
 
 # Custom javascript
 clearPolygonsJS <- "shinyjs.clearPolygons = function(){
@@ -33,22 +34,21 @@ clearPolygonsJS <- "shinyjs.clearPolygons = function(){
     }
 }"
 
-removePolygonsJS <- "shinyjs.removePolygons = function(){
-    polygons = document.getElementsByTagName('path');
-    i = 0;
-    j = polygons.length;
-    while (i < j) {
-	    element = polygons[i];
-	    opacity = element.getAttribute('fill-opacity');
-	    if (opacity==0) {
-		    element.parentNode.removeChild(element);
-	    } else {
-	        i++;
-	    }
-	    j = polygons.length;
-    }
-}
-"
+# removePolygonsJS <- "shinyjs.removePolygons = function(){
+#     polygons = document.getElementsByTagName('path');
+#     i = 0;
+#     j = polygons.length;
+#     while (i < j) {
+# 	    element = polygons[i];
+# 	    opacity = element.getAttribute('fill-opacity');
+# 	    if (opacity==0) {
+# 		    element.parentNode.removeChild(element);
+# 	    } else {
+# 	        i++;
+# 	    }
+# 	    j = polygons.length;
+#     }
+# }"
 
 changeColorsJS <- "shinyjs.changeColors = function(params){
     colors = params[0];
