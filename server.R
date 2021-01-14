@@ -9,39 +9,50 @@
 
 # Define server logic
 shinyServer(function(input, output) {
-    # options(shiny.reactlog = TRUE)
+    # If this option is set to true, you can hit Ctrl+F3 (Command+fn+F3) to view a reactive log of the app
+    # See https://shiny.rstudio.com/articles/debugging.html
+    options(shiny.reactlog = TRUE)
     
     # Selectors
     output$measureControls <- renderUI({
         # measChoices <- list.files("data/Rates_v3")
-        tagList(
-            selectInput("measure", "Measure", choices = measChoices, 
-                        selected = measChoices[1])
+        selectInput("measure", "Measure", choices = measChoices, selected = measChoices[1])
                         # selected = ifelse(is.na(input$measure), measChoices[1], input$measure))
-        )
     })
     
     output$geoControls <- renderUI({
-        measChoice1 <- list.files("data/Rates_v3")[1]
+        # measChoice1 <- list.files("data/Rates_v3")[1]
         # geoChoices <- list.files(glue("data/Rates_v3/{measChoice1}"))
-        tagList(
-            selectInput("geo", "Geography", choices = geoChoices, 
-                        selected = geoChoices[1])
-                        # selected = ifelse(is.na(input$geo), geoChoices[1], input$geo))
-        )
+        selectInput("geo", "Geography", choices = geoChoices, selected = geoChoices[1])
     })
     
     output$yearControls <- renderUI({
         measChoice1 <- measChoices[1]
         geoChoice1 <- geoChoices[1]
         yearChoices <- list.files(glue("data/Rates_v3/{measChoice1}/{geoChoice1}")) %>% as.numeric
-        tagList(
-            sliderInput("year", "Year", min=min(yearChoices), max=max(yearChoices), 
-                        value=min(yearChoices),
-                        #value=ifelse(is.na(input$year), min(yearChoices), input$year), 
-                        step=1, sep="", ticks=FALSE, 
-                        animate=animationOptions(interval=1000))
-        )
+        sliderInput("year", "Year", min=min(yearChoices), max=max(yearChoices), 
+            value=min(yearChoices),
+            #value=ifelse(is.na(input$year), min(yearChoices), input$year), 
+            step=1, sep="", ticks=FALSE, 
+            animate=animationOptions(interval=1000))
+    })
+    
+    # sidebar note
+    output$sidebar_note <- renderUI({
+        HTML("<p style='margin:15px; color:gray'>Hint: press the play button (above-right) to display an animation of rates over time.</p><p style='margin:15px; color:gray'>Click on a shaded region on the map to display a time-series plot of rates for that region.</p>")
+    })
+    
+    # create base map
+    output$map <- renderLeaflet({
+        leaflet() %>%
+            #addProviderTiles("CartoDB.Positron", group="base") %>%
+            addMapPane(name = "polygons", zIndex = 410) %>% 
+            addMapPane(name = "maplabels", zIndex = 420) %>% # higher zIndex means the labels are rendered on top of the polygons
+            addProviderTiles("CartoDB.PositronNoLabels") %>%
+            addProviderTiles("CartoDB.PositronOnlyLabels", 
+                             options = leafletOptions(pane = "maplabels"),
+                             group = "Place names") %>%
+            setView(lng=-118.3, lat=34.1, zoom=10) 
     })
     
     # Read in geodata
@@ -72,6 +83,9 @@ shinyServer(function(input, output) {
     # Read in data across all years
     # Input dependencies: measure, geography
     rate_data <- reactive({
+        
+        req(input$geo, input$measure)
+        
         geo_abb <- input$geo %>% gsub("[a-z]|\\s","",.)
         yearChoices <- list.files(glue("data/Rates_v3/{input$measure}/{input$geo}")) %>% as.numeric
         lapply(yearChoices, function(year) {
@@ -81,38 +95,52 @@ shinyServer(function(input, output) {
     
     # Create color palette
     # Input dependencies: measure, geography
-    pal <- reactive({colorBin(palette = "BuPu", domain = rate_data()$OVERALL, bins = 8)})
+    pal <- reactive({
+        req(input$geo, input$measure)
+        
+        colorBin(palette = "BuPu", domain = rate_data()$OVERALL, bins = 8)
+    })
     
     # Create popup graphs
     # Input dependencies: measure, geography
-    # get_popup_graphs <- reactive({
-    #     geographies <- levels(geodata()$GEO_VALUE)
-    # 
-    #     ymin <- min(rate_data()$OVERALL, na.rm=TRUE)
-    #     ymax <- max(rate_data()$OVERALL, na.rm=TRUE)
-    # 
-    #     lapply(geographies, function(gg) {
-    #         if (gg %in% rate_data()$GEO_VALUE) {
-    #             myplot <- rate_data() %>%
-    #                 filter(GEO_VALUE==gg) %>%
-    #                 ggplot(aes(x=YEAR, y=OVERALL)) +
-    #                 geom_line() +
-    #                 ylim(ymin, ymax) +
-    #                 theme_minimal() +
-    #                 labs(title = gg)
-    #             ggsave(glue('plots/{input$measure}/{input$geo}/{gg}.png'), width=4, height=4, dpi=75)
-    #             myplot
-    #         } else {
-    #             myplot <- data.frame(x=1,y=1,z="No data available") %>%
-    #                 ggplot(aes(x=x,y=y,label=z)) +
-    #                 geom_label() +
-    #                 theme_void() +
-    #                 labs(title = gg)
-    #             ggsave(glue('plots/{input$measure}/{input$geo}/{gg}.png'), width=4, height=4, dpi=75)
-    #             myplot
-    #         }
-    #     })
-    # })
+    get_popup_graphs <- reactive({
+        
+        req(input$geo, input$measure)
+        
+        geographies <- levels(geodata()$GEO_VALUE)
+
+        ymin <- min(rate_data()$OVERALL, na.rm=TRUE)
+        ymax <- max(rate_data()$OVERALL, na.rm=TRUE)
+        xmin <- min(rate_data()$YEAR, na.rm=TRUE)
+        xmax <- max(rate_data()$YEAR, na.rm=TRUE)
+        
+        TRUE
+
+        # lapply(geographies, function(gg) {
+        #     if (gg %in% rate_data()$GEO_VALUE) {
+        #         myplot <- rate_data() %>%
+        #             filter(GEO_VALUE==gg) %>%
+        #             ggplot(aes(x=YEAR, y=OVERALL)) +
+        #             geom_line() +
+        #             ylim(ymin, ymax) +
+        #             theme_minimal() +
+        #             labs(title = gg, x="Year", y="Rate") + 
+        #             scale_x_continuous(breaks=seq(xmin, xmax, 1))
+        #         ggsave(glue('plots/{input$measure}/{input$geo}/{gg}.png'), width=6, height=4, dpi=75)
+        #         # myplot
+        #         TRUE
+        #     } else {
+        #         myplot <- data.frame(x=1,y=1,z="No data available") %>%
+        #             ggplot(aes(x=x,y=y,label=z)) +
+        #             geom_label() +
+        #             theme_void() +
+        #             labs(title = gg)
+        #         ggsave(glue('plots/{input$measure}/{input$geo}/{gg}.png'), width=4, height=4, dpi=75)
+        #         # myplot
+        #         TRUE
+        #     }
+        # })
+    })
     
     # Get rates for the current year
     # Input dependencies: measure, geography, year
@@ -131,23 +159,12 @@ shinyServer(function(input, output) {
         return(values)
     })
     
-    output$map <- renderLeaflet({
-        # Create plot
-        leaflet() %>%
-            #addProviderTiles("CartoDB.Positron", group="base") %>%
-            addMapPane(name = "polygons", zIndex = 410) %>% 
-            addMapPane(name = "maplabels", zIndex = 420) %>% # higher zIndex rendered on top
-            addProviderTiles("CartoDB.PositronNoLabels") %>%
-            addProviderTiles("CartoDB.PositronOnlyLabels", 
-                             options = leafletOptions(pane = "maplabels"),
-                             group = "Place names") %>%
-            setView(lng=-118.3, lat=34.1, zoom=10) 
-    })
-    
     # Add polygons when geodata is loaded
     # Input dependencies: measure, geography (measure is only necessary for the popup info)
-    observe({
+    observe(label = 'Add polygons and popups', x={
 
+        req(input$geo, input$measure)
+        
         # Clear any existing polygons 
         # (this doesn't remove them per se but rather makes them invisible, which makes the transition look better)
         js$clearPolygons()
@@ -156,7 +173,7 @@ shinyServer(function(input, output) {
         # leafletProxy("map", data = geodata()) %>% leaflet::invokeMethod(data, "clearPopups")
         
         # Get popup graphs
-        # myplots <- get_popup_graphs()
+        makegraphs <- get_popup_graphs()
         myplots <- lapply(levels(geodata()$GEO_VALUE), function(gg) glue('plots/{input$measure}/{input$geo}/{gg}.png'))
         
         # Add polygons
@@ -191,7 +208,9 @@ shinyServer(function(input, output) {
     
     # Add legend and color
     # Input dependencies: measure, geography, year
-    observe({
+    observe(label = 'Add legend and color', x={
+        
+        req(input$geo, input$measure, input$year)
         
         # Add legend
         delay(5, leafletProxy("map", data = geodata()) %>%
@@ -211,7 +230,9 @@ shinyServer(function(input, output) {
     # Add color when rates change
     # (this bit is only useful for the animation)
     # Input dependencies: measure, geography, year
-    observe({
+    observe(label = 'Update colors', x={
+        
+        req(input$geo, input$measure, input$year)
         
         # Set color palette
         pal_tmp <- pal()

@@ -14,13 +14,14 @@ dashboardPage(
         width = 300,
         uiOutput("measureControls"),
         uiOutput("geoControls"),
-        uiOutput("yearControls")
+        uiOutput("yearControls"),
+        htmlOutput("sidebar_note")
     ),
     ## Body content
     dashboardBody(
         useShinyjs(),
         extendShinyjs(text=clearPolygonsJS, functions="clearPolygons"),
-        extendShinyjs(text=removePolygonsJS, functions="removePolygons"),
+        # extendShinyjs(text=removePolygonsJS, functions="removePolygons"),
         extendShinyjs(text=changeColorsJS, functions="changeColors"),
         fluidRow(
           fillPage(
