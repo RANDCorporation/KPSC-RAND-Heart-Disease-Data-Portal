@@ -12,8 +12,9 @@ dashboardPage(
     ## Sidebar content
     dashboardSidebar(
         width = 300,
-        uiOutput("measureControls"),
-        uiOutput("geoControls"),
+        uiOutput("ageControls"),
+        uiOutput("genderControls"),
+        uiOutput("raceControls"),
         uiOutput("yearControls"),
         htmlOutput("sidebar_note")
     ),
