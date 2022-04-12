@@ -67,6 +67,7 @@ shinyServer(function(input, output) {
             # Originally from https://egis3.lacounty.gov/dataportal/2012/03/01/health-districts-hd-2012/
             # Converted into WGS 84 projection using QGIS
             gd <- st_read('data/geodata/HD_2012_WGS84/Health_Districts_2012_WGS84.shp')
+            # gd <- rgeos::gSimplify(gd, tol=5)
             #gd <- st_read('data/geodata/HD_2012_WGS84_noCI/Health_Districts_2012_WGS84_noCI.shp')
             gd %<>% rename(GEO_VALUE = HD_NAME) %>% arrange(GEO_VALUE)
         } else if (geo=="Census Designated Place") {
@@ -163,7 +164,7 @@ shinyServer(function(input, output) {
     # Input dependencies: measure, geography (measure is only necessary for the popup info)
     observe(label = 'Add polygons and popups', x={
 
-        req(input$geo, input$measure)
+        req(input$geo)# , input$measure)
         
         # Clear any existing polygons 
         # (this doesn't remove them per se but rather makes them invisible, which makes the transition look better)
@@ -173,8 +174,8 @@ shinyServer(function(input, output) {
         # leafletProxy("map", data = geodata()) %>% leaflet::invokeMethod(data, "clearPopups")
         
         # Get popup graphs
-        makegraphs <- get_popup_graphs()
-        myplots <- lapply(levels(geodata()$GEO_VALUE), function(gg) glue('plots/{input$measure}/{input$geo}/{gg}.png'))
+        # makegraphs <- get_popup_graphs()
+        # myplots <- lapply(levels(geodata()$GEO_VALUE), function(gg) glue('plots/{input$measure}/{input$geo}/{gg}.png'))
         
         # Add polygons
         leafletProxy("map", data = geodata()) %>%
@@ -184,7 +185,7 @@ shinyServer(function(input, output) {
                         color = "#444444", 
                         weight = 0.25, smoothFactor = 0.5,
                         opacity = 1.0, fillOpacity = 0.0) %>%
-            addPopupImages(myplots, group="Rates") %>%
+            # addPopupImages(myplots, group="Rates") %>%
             clearControls() %>% 
             addLegend("bottomleft",
                       pal = pal(),
@@ -202,9 +203,55 @@ shinyServer(function(input, output) {
         #           title = "Rate",
         #           opacity = 0.6)
 
-
-    
     })
+    
+    
+    # Add popup graphs
+    # Input dependencies: measure, geography
+    observe(label = 'Add popups', x={
+        
+        req(input$geo, input$measure)
+        
+        # Clear any existing polygons 
+        # (this doesn't remove them per se but rather makes them invisible, which makes the transition look better)
+        # js$clearPolygons()
+        
+        # Clear any existing popups
+        # leafletProxy("map", data = geodata()) %>% leaflet::invokeMethod(data, "clearPopups")
+        
+        # Get popup graphs
+        makegraphs <- get_popup_graphs()
+        myplots <- lapply(levels(geodata()$GEO_VALUE), function(gg) glue('plots/{input$measure}/{input$geo}/{gg}.png'))
+        
+        # Add polygons
+        leafletProxy("map", data = geodata()) %>%
+            # clearShapes() %>%
+            # addPolygons(layerId = geodata()$GEO_VALUE,
+            #             group = "Rates",
+            #             color = "#444444", 
+            #             weight = 0.25, smoothFactor = 0.5,
+            #             opacity = 1.0, fillOpacity = 0.0) %>%
+            leaflet::invokeMethod(data, "clearPopups") %>% 
+            addPopupImages(myplots, group="Rates") # %>%
+            # clearControls() %>% 
+            # addLegend("bottomleft",
+            #           pal = pal(),
+            #           values = ~rate_data()$OVERALL,
+            #           title = "Rate",
+            #           opacity = 0.6)
+        
+        # Uncomment this to allow toggling between panes
+        # One issue is that if the Rates are unchecked and then checked again, the colors aren't restored
+        # addLayersControl(overlayGroups = c("Place names", "Rates")) %>%
+        # setView(lng=-118.3, lat=34.1, zoom=10) %>%
+        # addLegend("bottomleft",
+        #           pal = pal(),
+        #           values = ~rate_data()$OVERALL,
+        #           title = "Rate",
+        #           opacity = 0.6)
+        
+    })    
+    
     
     # Add legend and color
     # Input dependencies: measure, geography, year
