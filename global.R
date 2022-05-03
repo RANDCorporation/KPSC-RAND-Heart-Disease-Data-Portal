@@ -39,7 +39,7 @@ rate_data %<>% rename(Year = year,
                       Percent = percent) %>%
   mutate(RaceEth = case_when(
     Hispanic=='Hispanic' ~ 'Hispanic',
-    TRUE ~ paste0('Non-Hispanic ', Race)
+    TRUE ~ Race
   ))
 
 
@@ -76,22 +76,6 @@ clearPolygonsJS <- "shinyjs.clearPolygons = function(){
       polygons[i].setAttribute('fill-opacity',0);
     }
 }"
-
-# removePolygonsJS <- "shinyjs.removePolygons = function(){
-#     polygons = document.getElementsByTagName('path');
-#     i = 0;
-#     j = polygons.length;
-#     while (i < j) {
-# 	    element = polygons[i];
-# 	    opacity = element.getAttribute('fill-opacity');
-# 	    if (opacity==0) {
-# 		    element.parentNode.removeChild(element);
-# 	    } else {
-# 	        i++;
-# 	    }
-# 	    j = polygons.length;
-#     }
-# }"
 
 # change the colors of the 'path' objects and set their opacity to 0.6 
 changeColorsJS <- "shinyjs.changeColors = function(params){
