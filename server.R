@@ -31,7 +31,7 @@ shinyServer(function(input, output) {
     
     # sidebar note
     output$sidebar_note <- renderUI({
-        HTML("<p style='margin:15px; color:gray'>Hint: press the play button (above-right) to display an animation of rates over time.</p><p style='margin:15px; color:gray'>Click on a shaded region on the map to display a time-series plot of rates for that region.</p>")
+        HTML("<p style='margin:15px; color:gray'>Hint: press the play button (above-right) to display an animation of rates over time.</p>")
     })
     
     # create base map
@@ -43,13 +43,20 @@ shinyServer(function(input, output) {
             addProviderTiles("CartoDB.PositronOnlyLabels", 
                              options = leafletOptions(pane = "maplabels"),
                              group = "Place names") %>%
-            setView(lng=-118.3, lat=34.1, zoom=10) %>%
+            setView(lng=-118.4, lat=34.1, zoom=10) %>%
             addPolygons(layerId = geodata$HD_NAME,
                         group = "Rates",
                         color = "#444444", 
                         weight = 0.25, smoothFactor = 0.5,
-                        opacity = 1.0, fillOpacity = 0.0) %>%
-            addLegend("bottomleft",
+                        opacity = 1.0, fillOpacity = 0.0,
+                        highlightOptions = NULL,
+                        label = paste0(geodata$HD_NAME, ' Health District'),
+                        labelOptions = labelOptions(
+                          style = list("font-weight" = "normal", padding = "3px 8px"),
+                          textsize = "15px",
+                          direction = "auto"),
+                        options = pathOptions(className = paste0("HD-",gsub(' ', '-', geodata$HD_NAME)))) %>%
+            addLegend("bottomright",
                       pal = pal,
                       values = ~rate_data$Percent,
                       labFormat = lab,
@@ -75,7 +82,27 @@ shinyServer(function(input, output) {
         
         # Return values of the desired variable (currently Percent) in the same order as the geographies
         values <- df$Percent[match(geodata$HD_NAME, df$HD_NAME)]
+        names(values) <- df$HD_NAME[match(geodata$HD_NAME, df$HD_NAME)]
         return(values)
+    })
+    
+    # Create data table output
+    output$ratesTable <- renderDT({
+      # If Shiny tries to proceed with any of these missing, it'll throw an error and the app will break.
+      req(input$age, input$gender, input$race, input$year)
+      
+      # Set parameters for determining which data to pull
+      geo_abb <- input$geo %>% gsub("[a-z]|\\s","",.)
+      
+      # Filter rate data to the selected year
+      df <- rate_data %>% filter(Age==input$age,
+                                 Gender==input$gender,
+                                 RaceEth==input$race,
+                                 Year==input$year)
+      
+      df %>% 
+        filter(HD_NAME!='_ALL_') %>% 
+        select(HD_NAME, Percent)
     })
     
     
@@ -86,7 +113,9 @@ shinyServer(function(input, output) {
         req(input$year)
         
         # Add the proper shading
-        delay(10, js$changeColors(pal(rates())))
+        # delay(10, js$changeColors(pal(rates())))
+        hd_names <- paste0("HD-",gsub(' ', '-', names(rates())))
+        delay(10, js$changeColors2(hd_names, pal(rates())))
 
     })
     
@@ -98,7 +127,9 @@ shinyServer(function(input, output) {
         req(input$year)
 
         # Custom written function
-        js$changeColors(pal(rates()))
+        # js$changeColors(pal(rates()))
+        hd_names <- paste0("HD-",gsub(' ', '-', names(rates())))
+        js$changeColors2(hd_names, pal(rates()))
         
     })
     

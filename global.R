@@ -6,6 +6,7 @@
 # load libraries ----------------------------------------------------------
 
 library(dplyr)
+library(DT)
 library(ggplot2)
 library(glue)
 library(htmltools)
@@ -17,7 +18,7 @@ library(magrittr)
 library(readxl)
 library(sf)
 library(shiny)
-library(shinydashboard)
+# library(shinydashboard)
 library(shinyjs)
 library(stringr)
 library(tidyr)
@@ -85,5 +86,16 @@ changeColorsJS <- "shinyjs.changeColors = function(params){
 	    element = polygons[i];
 	    element.setAttribute('fill',colors[i]);
 	    element.setAttribute('fill-opacity',0.6);
+    }
+}"
+
+changeColorsJS2 <- "shinyjs.changeColors2 = function(params){
+    districts = params[0];
+    colors = params[1];
+    for (i=0; i<districts.length; i++) {
+      thisDistrict = districts[i];
+	    element = document.getElementsByClassName(thisDistrict);
+	    element[0].setAttribute('fill',colors[i]);
+	    element[0].setAttribute('fill-opacity',0.6);
     }
 }"
