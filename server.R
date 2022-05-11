@@ -1,6 +1,8 @@
 # server.R ----------------------------------------------------------------
 # 
 # Define the server logic for the app
+#
+# Heart Disease Data Portal v 0.1 - initial testing
 
 
 # Define server logic
@@ -86,26 +88,6 @@ shinyServer(function(input, output) {
         return(values)
     })
     
-    # Create data table output
-    output$ratesTable <- renderDT({
-      # If Shiny tries to proceed with any of these missing, it'll throw an error and the app will break.
-      req(input$age, input$gender, input$race, input$year)
-      
-      # Set parameters for determining which data to pull
-      geo_abb <- input$geo %>% gsub("[a-z]|\\s","",.)
-      
-      # Filter rate data to the selected year
-      df <- rate_data %>% filter(Age==input$age,
-                                 Gender==input$gender,
-                                 RaceEth==input$race,
-                                 Year==input$year)
-      
-      df %>% 
-        filter(HD_NAME!='_ALL_') %>% 
-        select(HD_NAME, Percent)
-    })
-    
-    
     # Add legend and color
     # Input dependencies: measure, geography, year
     observe(label = 'Add legend and color', x={
@@ -113,9 +95,8 @@ shinyServer(function(input, output) {
         req(input$year)
         
         # Add the proper shading
-        # delay(10, js$changeColors(pal(rates())))
         hd_names <- paste0("HD-",gsub(' ', '-', names(rates())))
-        delay(10, js$changeColors2(hd_names, pal(rates())))
+        delay(10, js$changeColors(hd_names, pal(rates())))
 
     })
     
@@ -127,9 +108,8 @@ shinyServer(function(input, output) {
         req(input$year)
 
         # Custom written function
-        # js$changeColors(pal(rates()))
         hd_names <- paste0("HD-",gsub(' ', '-', names(rates())))
-        js$changeColors2(hd_names, pal(rates()))
+        js$changeColors(hd_names, pal(rates()))
         
     })
     

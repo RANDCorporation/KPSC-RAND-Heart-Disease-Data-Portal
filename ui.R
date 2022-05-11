@@ -1,6 +1,8 @@
 # ui.R --------------------------------------------------------------------
 #
 # Define the user interface of the app.
+#
+# Heart Disease Data Portal v 0.1 - initial testing
 
 
 bootstrapPage(
@@ -17,14 +19,11 @@ bootstrapPage(
                 uiOutput("yearControls"),
                 htmlOutput("sidebar_note"),
                 useShinyjs(),
-                extendShinyjs(text=clearPolygonsJS, functions="clearPolygons"),
-                extendShinyjs(text=changeColorsJS, functions="clearColors"),
-                extendShinyjs(text=changeColorsJS2, functions="changeColors2")),
+                extendShinyjs(text=changeColorsJS, functions="changeColors")),
   absolutePanel(top=20, right=20, width="30%", height="70%",
                 id="ratesTable",
                 style="padding:15px",
-                draggable=FALSE)#,
-                # DTOutput("ratesTable"))
+                draggable=FALSE)
 )
 
 # 

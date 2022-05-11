@@ -1,17 +1,15 @@
 # global.R ----------------------------------------------------------------
 #
 # Define global objects for the Shiny app.
-
+#
+# Heart Disease Data Portal v 0.1 - initial testing
 
 # load libraries ----------------------------------------------------------
 
 library(dplyr)
-library(DT)
 library(ggplot2)
 library(glue)
 library(htmltools)
-# library(knitr) # for kable function
-# library(kableExtra)
 library(leaflet)
 library(leafpop)
 library(magrittr)
@@ -78,18 +76,8 @@ clearPolygonsJS <- "shinyjs.clearPolygons = function(){
     }
 }"
 
-# change the colors of the 'path' objects and set their opacity to 0.6 
+# change the colors of the polygons and set their opacity to 0.6 
 changeColorsJS <- "shinyjs.changeColors = function(params){
-    colors = params[0];
-    polygons = document.getElementsByTagName('path');
-    for (i=0; i<polygons.length; i++) {
-	    element = polygons[i];
-	    element.setAttribute('fill',colors[i]);
-	    element.setAttribute('fill-opacity',0.6);
-    }
-}"
-
-changeColorsJS2 <- "shinyjs.changeColors2 = function(params){
     districts = params[0];
     colors = params[1];
     for (i=0; i<districts.length; i++) {
