@@ -45,7 +45,11 @@ shinyServer(function(input, output) {
             addProviderTiles("CartoDB.PositronOnlyLabels", 
                              options = leafletOptions(pane = "maplabels"),
                              group = "Place names") %>%
-            setView(lng=-118.4, lat=34.1, zoom=10) %>%
+            setView(lng=-118.4, lat=34.1, zoom=10) %>% 
+            addPolylines(data = freeways, 
+                     color = "#222222", 
+                     opacity = 0.05, 
+                     weight = 5) %>%
             addPolygons(layerId = geodata$HD_NAME,
                         group = "Rates",
                         color = "#444444", 
@@ -63,6 +67,7 @@ shinyServer(function(input, output) {
                       values = ~rate_data$Percent,
                       labFormat = lab,
                       title = "Rate",
+                      na.label = "Censored",
                       opacity = 0.6)
     })
     
@@ -72,9 +77,6 @@ shinyServer(function(input, output) {
     rates <- reactive({
         # If Shiny tries to proceed with any of these missing, it'll throw an error and the app will break.
         req(input$age, input$gender, input$race, input$year)
-        
-        # Set parameters for determining which data to pull
-        geo_abb <- input$geo %>% gsub("[a-z]|\\s","",.)
         
         # Filter rate data to the selected year
         df <- rate_data %>% filter(Age==input$age,
@@ -111,6 +113,26 @@ shinyServer(function(input, output) {
         hd_names <- paste0("HD-",gsub(' ', '-', names(rates())))
         js$changeColors(hd_names, pal(rates()))
         
+    })
+    
+    output$timeSeriesPlots <- renderPlot({
+      
+      # If Shiny tries to proceed with any of these missing, it'll throw an error and the app will break.
+      req(input$age, input$gender, input$race, input$year)
+      
+      # Filter rate data to the selected year
+      plotData <- rate_data %>% filter(Age==input$age,
+                                       Gender==input$gender,
+                                       RaceEth==input$race) %>%
+        mutate(Year = lubridate::ymd(glue('{Year}-01-01')))
+      
+      plotData %>% 
+        ggplot(aes(x=Year, y=Percent)) +
+        geom_line() +
+        scale_y_continuous(labels = scales::label_percent(accuracy = 1)) + 
+        facet_wrap(vars(HD_NAME), ncol=4) + 
+        theme_minimal()
+      
     })
     
 })
