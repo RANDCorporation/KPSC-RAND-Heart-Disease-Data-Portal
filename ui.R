@@ -62,7 +62,7 @@
 # )
 
 dashboardPage(
-  dashboardHeader(title = "Heart Disease Data Portal", titleWidth = 300),
+  dashboardHeader(title = "Kaiser Permanente - RAND Heart Disease Data Portal", titleWidth = "100%"),
   ## Sidebar content
   dashboardSidebar(
     width = 300,

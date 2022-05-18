@@ -46,29 +46,38 @@ shinyServer(function(input, output) {
                              options = leafletOptions(pane = "maplabels"),
                              group = "Place names") %>%
             setView(lng=-118.4, lat=34.1, zoom=10) %>% 
-            addPolylines(data = freeways, 
-                     color = "#222222", 
-                     opacity = 0.05, 
-                     weight = 5) %>%
             addPolygons(layerId = geodata$HD_NAME,
-                        group = "Rates",
+                        group = "Health Districts",
                         color = "#444444", 
-                        weight = 0.25, smoothFactor = 0.5,
+                        weight = 0.75, 
+                        # weight = 0.25, 
+                        smoothFactor = 0.5,
                         opacity = 1.0, fillOpacity = 0.0,
                         highlightOptions = NULL,
+                        # highlightOptions = highlightOptions(
+                        #   weight = 2,
+                        #   bringToFront = TRUE),
                         label = paste0(geodata$HD_NAME, ' Health District'),
                         labelOptions = labelOptions(
+                          noHide = FALSE,
                           style = list("font-weight" = "normal", padding = "3px 8px"),
                           textsize = "15px",
                           direction = "auto"),
                         options = pathOptions(className = paste0("HD-",gsub(' ', '-', geodata$HD_NAME)))) %>%
+        addPolylines(data = freeways, 
+                     group = "Display Freeways",
+                     color = "#ff0000",
+                     opacity = 0.15, 
+                     weight = 1) %>%
             addLegend("bottomright",
                       pal = pal,
                       values = ~rate_data$Percent,
                       labFormat = lab,
                       title = "Rate",
                       na.label = "Censored",
-                      opacity = 0.6)
+                      opacity = 0.6) %>%
+            addLayersControl(overlayGroups = c("Display Freeways"),
+                             options = layersControlOptions(collapsed = FALSE))
     })
     
     
@@ -126,12 +135,20 @@ shinyServer(function(input, output) {
                                        RaceEth==input$race) %>%
         mutate(Year = lubridate::ymd(glue('{Year}-01-01')))
       
+      # Separate out the data for LA County as a whole
+      plotData_all <- plotData %>% filter(HD_NAME=='_ALL_') %>% select(-HD_NAME) %>% mutate(Entity="LA County")
+      plotData <- plotData %>% filter(HD_NAME!='_ALL_') %>% mutate(Entity = "Health District")
+      
       plotData %>% 
-        ggplot(aes(x=Year, y=Percent)) +
+        ggplot(aes(x=Year, y=Percent, color=Entity)) +
         geom_line() +
+        geom_line(data = plotData_all, aes(x=Year, y=Percent, color=Entity)) + 
         scale_y_continuous(labels = scales::label_percent(accuracy = 1)) + 
+        scale_color_manual(values = c("black", "steelblue")) + 
         facet_wrap(vars(HD_NAME), ncol=4) + 
-        theme_minimal()
+        labs(caption = "Note: Health Districts with censored values will have missing lines.") + 
+        theme_minimal() + 
+        theme(plot.caption = element_text(hjust = 0, size=12))
       
     })
     
