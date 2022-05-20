@@ -50,13 +50,9 @@ shinyServer(function(input, output) {
                         group = "Health Districts",
                         color = "#444444", 
                         weight = 0.75, 
-                        # weight = 0.25, 
                         smoothFactor = 0.5,
                         opacity = 1.0, fillOpacity = 0.0,
                         highlightOptions = NULL,
-                        # highlightOptions = highlightOptions(
-                        #   weight = 2,
-                        #   bringToFront = TRUE),
                         label = paste0(geodata$HD_NAME, ' Health District'),
                         labelOptions = labelOptions(
                           noHide = FALSE,
@@ -139,6 +135,10 @@ shinyServer(function(input, output) {
       plotData_all <- plotData %>% filter(HD_NAME=='_ALL_') %>% select(-HD_NAME) %>% mutate(Entity="LA County")
       plotData <- plotData %>% filter(HD_NAME!='_ALL_') %>% mutate(Entity = "Health District")
       
+      # drop health districts with censored values
+      censored <- plotData %>% filter(is.na(Percent)) %>% pull(HD_NAME) %>% unique()
+      plotData <- plotData %>% filter(!(HD_NAME %in% censored))
+      
       plotData %>% 
         ggplot(aes(x=Year, y=Percent, color=Entity)) +
         geom_line() +
@@ -146,7 +146,7 @@ shinyServer(function(input, output) {
         scale_y_continuous(labels = scales::label_percent(accuracy = 1)) + 
         scale_color_manual(values = c("black", "steelblue")) + 
         facet_wrap(vars(HD_NAME), ncol=4) + 
-        labs(caption = "Note: Health Districts with censored values will have missing lines.") + 
+        labs(caption = ifelse(length(censored > 0), "Note: Health Districts with censored values are not displayed.", "")) + 
         theme_minimal() + 
         theme(plot.caption = element_text(hjust = 0, size=12))
       
