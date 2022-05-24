@@ -22,12 +22,16 @@ dashboardPage(
     ),
     useShinyjs(),
     extendShinyjs(text=changeColorsJS, functions="changeColors"),
+    extendShinyjs(text=changeYearJS, functions="changeYear"),
+    extendShinyjs(text=displayRatesJS, functions="displayRates"),
     tabsetPanel(
       tabPanel("Map",
                fluidRow(
                  fillPage(
                    tags$style(type = "text/css", "#map {height: calc(100vh - 80px) !important;} #geoSelect {height: calc(100vh - 100px) !important;}"),
-                   fillRow(flex=c(4,1), leafletOutput('map', width="99%", height="100%"))
+                   fillRow(flex=c(4,1), 
+                           leafletOutput('map', width="99%", height="100%")
+                   )
                  )
                )
       ),

@@ -33,12 +33,13 @@ shinyServer(function(input, output) {
     
     # sidebar note
     output$sidebar_note <- renderUI({
-        HTML("<p style='margin:15px; color:gray'>Hint: press the play button (above-right) to display an animation of rates over time.</p>")
+        HTML("<p style='margin:15px; color:gray'>Hint: press the play button (above-right) to display an animation of hypertension rates over time.</p>")
     })
+    
     
     # create base map
     output$map <- renderLeaflet({
-        leaflet(data = geodata) %>%
+        leaflet(data = geodata, options = leafletOptions(zoomControl = FALSE)) %>%
             addMapPane(name = "polygons", zIndex = 410) %>% 
             addMapPane(name = "maplabels", zIndex = 420) %>% # higher zIndex means the labels are rendered on top of the polygons
             addProviderTiles("CartoDB.PositronNoLabels") %>%
@@ -53,27 +54,36 @@ shinyServer(function(input, output) {
                         smoothFactor = 0.5,
                         opacity = 1.0, fillOpacity = 0.0,
                         highlightOptions = NULL,
-                        label = paste0(geodata$HD_NAME, ' Health District'),
-                        labelOptions = labelOptions(
-                          noHide = FALSE,
-                          style = list("font-weight" = "normal", padding = "3px 8px"),
-                          textsize = "15px",
-                          direction = "auto"),
+                        # label = paste0(geodata$HD_NAME, ' Health District'),
+                        # labelOptions = labelOptions(
+                        #   noHide = FALSE,
+                        #   style = list("font-weight" = "normal", padding = "3px 8px"),
+                        #   textsize = "15px",
+                        #   direction = "auto"),
                         options = pathOptions(className = paste0("HD-",gsub(' ', '-', geodata$HD_NAME)))) %>%
-        addPolylines(data = freeways, 
-                     group = "Display Freeways",
-                     color = "#ff0000",
-                     opacity = 0.15, 
-                     weight = 1) %>%
+            addPolylines(data = freeways, 
+                         group = "Display Freeways",
+                         color = "#ff0000",
+                         opacity = 0.15, 
+                         weight = 1) %>%
             addLegend("bottomright",
                       pal = pal,
                       values = ~rate_data$Percent,
                       labFormat = lab,
-                      title = "Rate",
+                      title = "Hypertension Rate",
                       na.label = "Censored",
                       opacity = 0.6) %>%
             addLayersControl(overlayGroups = c("Display Freeways"),
-                             options = layersControlOptions(collapsed = FALSE))
+                             options = layersControlOptions(collapsed = FALSE)) %>%
+            addControl(tags$div(
+              tags$style(HTML("")), HTML("")
+              ), position = "topleft", className="year-label") %>%
+            addControl(tags$div(
+              tags$style(HTML("")), HTML("")
+            ), position = "bottomleft", className="rate-label") %>%
+            htmlwidgets::onRender("function(el, x) {
+              L.control.zoom({ position: 'topright' }).addTo(this)
+            }")
     })
     
     
@@ -95,31 +105,54 @@ shinyServer(function(input, output) {
         return(values)
     })
     
-    # Add legend and color
+    # Add color
     # Input dependencies: measure, geography, year
-    observe(label = 'Add legend and color', x={
+    observe(label = 'Add color', x={
         
         req(input$year)
         
         # Add the proper shading
         hd_names <- paste0("HD-",gsub(' ', '-', names(rates())))
-        delay(10, js$changeColors(hd_names, pal(rates())))
+        delay(1, js$changeColors(hd_names, pal(rates())))
+        yearLabelHTML <- paste0("<div><style>
+        .leaflet-control.year-label { 
+          transform: translate(40%,0%);
+          position: fixed !important;
+          left: 350;
+          text-align: center;
+          padding-left: 10px; 
+          padding-right: 10px; 
+          background: rgba(255,255,255,0.75);
+          font-weight: bold;
+          font-size: 42px;
+        }
+        </style>", 
+        input$year, 
+        "</div>")
+        delay(1, js$changeYear(yearLabelHTML))
+        
+        # test
+        rateLabelHTML <- paste0("<div><style> .leaflet-control.rate-label { transform: translate(20px,-90px); position: fixed !important; left: 350; text-align: center; padding-left: 10px;  padding-right: 10px;  background: rgba(255,255,255,0.75); font-weight: bold; font-size: 24px; } </style>", 
+                                names(rates()), " Health District: ", 
+                                scales::percent(rates(), accuracy=1), "</div>")
+        delay(1, js$displayRates(hd_names, rateLabelHTML))
 
     })
     
     # Add color when rates change
     # (this bit is only useful for the animation)
     # Input dependencies: measure, geography, year
-    observe(label = 'Update colors', x={
-        
-        req(input$year)
-
-        # Custom written function
-        hd_names <- paste0("HD-",gsub(' ', '-', names(rates())))
-        js$changeColors(hd_names, pal(rates()))
-        
-    })
+    # observe(label = 'Update colors', x={
+    #     
+    #     req(input$year)
+    # 
+    #     # Custom written function
+    #     hd_names <- paste0("HD-",gsub(' ', '-', names(rates())))
+    #     js$changeColors(hd_names, pal(rates()))
+    #     
+    # })
     
+    # Create plots for the time series tab
     output$timeSeriesPlots <- renderPlot({
       
       # If Shiny tries to proceed with any of these missing, it'll throw an error and the app will break.

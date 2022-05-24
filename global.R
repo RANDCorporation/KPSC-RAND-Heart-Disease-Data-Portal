@@ -10,6 +10,7 @@ library(dplyr)
 library(ggplot2)
 library(glue)
 library(htmltools)
+library(htmlwidgets)
 library(leaflet)
 # library(leafpop)
 library(magrittr)
@@ -89,4 +90,37 @@ changeColorsJS <- "shinyjs.changeColors = function(params){
 	    element[0].setAttribute('fill',colors[i]);
 	    element[0].setAttribute('fill-opacity',0.6);
     }
+}"
+
+# change the year being labeled on the map
+changeYearJS <- "shinyjs.changeYear = function(params){
+    newYearHTML = params[0];
+	  yearLabel = document.getElementsByClassName('year-label');
+	  yearLabel[0].innerHTML = newYearHTML;
+}"
+
+# display hypertension rates on mouseover
+displayRatesJS <- "shinyjs.displayRates = function(params) {
+    districts = params[0];
+    newHTML = params[1];
+    emptyHTML = '<div><style></style></div>';
+    
+    for (i=0; i<districts.length; i++) {
+      thisDistrict = districts[i];
+      thisHTML = newHTML[i]
+	    element = document.getElementsByClassName(thisDistrict);
+	    element[0].onmouseover = ( function(new_html) {
+        return function() { 
+          rateLabel = document.getElementsByClassName('rate-label');
+	        rateLabel[0].innerHTML = new_html;
+        }
+      }) (thisHTML);
+      element[0].onmouseout = ( function(new_html) {
+        return function() { 
+          rateLabel = document.getElementsByClassName('rate-label');
+	        rateLabel[0].innerHTML = new_html;
+        }
+      }) (emptyHTML);
+    }
+    
 }"
