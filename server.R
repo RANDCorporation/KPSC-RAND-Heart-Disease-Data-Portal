@@ -11,6 +11,10 @@ shinyServer(function(input, output) {
     # See https://shiny.rstudio.com/articles/debugging.html
     options(shiny.reactlog = TRUE)
     
+    # run JS to define global JS variables
+    # this is used to track the highlighted health district
+    js$defineGlobals()
+  
     # Selectors
     output$ageControls <- renderUI({
         selectInput("age", "Age", choices = age_categories, selected = age_categories[1])
@@ -47,6 +51,11 @@ shinyServer(function(input, output) {
                              options = leafletOptions(pane = "maplabels"),
                              group = "Place names") %>%
             setView(lng=-118.4, lat=34.1, zoom=10) %>% 
+            addPolylines(data = freeways, 
+                     group = "Display Freeways",
+                     color = "#ff0000",
+                     opacity = 0.2, 
+                     weight = 1) %>%
             addPolygons(layerId = geodata$HD_NAME,
                         group = "Health Districts",
                         color = "#444444", 
@@ -55,11 +64,6 @@ shinyServer(function(input, output) {
                         opacity = 1.0, fillOpacity = 0.0,
                         highlightOptions = NULL,
                         options = pathOptions(className = paste0("HD-",gsub(' ', '-', geodata$HD_NAME)))) %>%
-            addPolylines(data = freeways, 
-                         group = "Display Freeways",
-                         color = "#ff0000",
-                         opacity = 0.15, 
-                         weight = 1) %>%
             addLegend("bottomright",
                       pal = pal,
                       values = ~rate_data$Percent,
@@ -72,9 +76,8 @@ shinyServer(function(input, output) {
             addControl(tags$div(
               tags$style(HTML("")), HTML("")
               ), position = "topleft", className="year-label") %>%
-            addControl(tags$div(
-              tags$style(HTML("")), HTML("")
-            ), position = "bottomleft", className="rate-label") %>%
+            addControl(HTML("<div><style> .leaflet-control.rate-label { transform: translate(20px,-90px); position: fixed !important; left: 350; text-align: center; padding-left: 10px;  padding-right: 10px;  background: rgba(255,255,255,0.75); font-weight: bold; font-size: 24px; } </style>Mouse over a district to display rates</div>"), 
+                       position = "bottomleft", className="rate-label") %>%
             htmlwidgets::onRender("function(el, x) {
               L.control.zoom({ position: 'topright' }).addTo(this)
             }")

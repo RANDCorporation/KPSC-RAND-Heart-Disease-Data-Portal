@@ -1,14 +1,24 @@
 .skin-blue .main-header .logo {
-    background-color: #367fa9;
+    background-color: #0078B3;
     color: #fff;
     border-bottom: 0 solid transparent;
     text-align: left;
 }
 
 .skin-blue .main-header .navbar {
-    background-color: #367fa9;
+    background-color: #0078B3;
+}
+
+.control-label {
+    color: #000;
+}
+
+.glyphicon {
+  color:#000
 }
 
 .skin-blue .left-side, .skin-blue .main-sidebar, .skin-blue .wrapper {
-    background-color: #222d32;
+    /* background-color: #222d32; */
+    /* background-color: #D3D6DC; */
+    background-color: #E9EBEE; color: #000 !important;
 }

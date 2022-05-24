@@ -21,6 +21,7 @@ dashboardPage(
       tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
     ),
     useShinyjs(),
+    extendShinyjs(text=defineGlobalsJS, functions="defineGlobals"),
     extendShinyjs(text=changeColorsJS, functions="changeColors"),
     extendShinyjs(text=changeYearJS, functions="changeYear"),
     extendShinyjs(text=displayRatesJS, functions="displayRates"),
