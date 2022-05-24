@@ -12,7 +12,6 @@ library(glue)
 library(htmltools)
 library(htmlwidgets)
 library(leaflet)
-# library(leafpop)
 library(magrittr)
 library(readxl)
 library(sf)
@@ -55,12 +54,6 @@ race_categories <- unique(rate_data$RaceEth)
 hispanic_categories <- unique(rate_data$Hispanic)
 year_categories <- unique(rate_data$Year)
 
-# for race, move the 'Other' category to the end
-# oth_i <- which(grepl('other', race_categories, ignore.case = TRUE))
-# race_categories <- c(race_categories[-oth_i], race_categories[oth_i])
-# rm(oth_i)
-
-
 
 # define the color palette and label format -------------------------------
 
@@ -70,15 +63,6 @@ lab <- labelFormat(suffix = '%', transform = function(x) x * 100)
 
 
 # define custom javascript functions --------------------------------------
-
-# set the opacity of all 'path' polygons to 0
-clearPolygonsJS <- "shinyjs.clearPolygons = function(){
-    polygons = document.getElementsByTagName('path');
-    for (i=0; i<polygons.length; i++) {
-      polygons[i].setAttribute('opacity',0);
-      polygons[i].setAttribute('fill-opacity',0);
-    }
-}"
 
 # change the colors of the polygons and set their opacity to 0.6 
 changeColorsJS <- "shinyjs.changeColors = function(params){
@@ -99,24 +83,30 @@ changeYearJS <- "shinyjs.changeYear = function(params){
 	  yearLabel[0].innerHTML = newYearHTML;
 }"
 
-# display hypertension rates on mouseover
+# display health district names and hypertension rates on mouseover
 displayRatesJS <- "shinyjs.displayRates = function(params) {
+    // pull parameters and define empty html for mouseout
     districts = params[0];
     newHTML = params[1];
     emptyHTML = '<div><style></style></div>';
     
+    // loop over each district and assign mouseover and mouseout functions
+    // on mouseover, add the label
     for (i=0; i<districts.length; i++) {
       thisDistrict = districts[i];
       thisHTML = newHTML[i]
 	    element = document.getElementsByClassName(thisDistrict);
 	    element[0].onmouseover = ( function(new_html) {
         return function() { 
+          this.setAttribute('stroke-width', 5)
           rateLabel = document.getElementsByClassName('rate-label');
 	        rateLabel[0].innerHTML = new_html;
         }
       }) (thisHTML);
+      // on mouseout, remove the label
       element[0].onmouseout = ( function(new_html) {
         return function() { 
+          this.setAttribute('stroke-width', 1)
           rateLabel = document.getElementsByClassName('rate-label');
 	        rateLabel[0].innerHTML = new_html;
         }

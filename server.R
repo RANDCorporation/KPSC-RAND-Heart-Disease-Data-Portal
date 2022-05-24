@@ -50,16 +50,10 @@ shinyServer(function(input, output) {
             addPolygons(layerId = geodata$HD_NAME,
                         group = "Health Districts",
                         color = "#444444", 
-                        weight = 0.75, 
+                        weight = 1, 
                         smoothFactor = 0.5,
                         opacity = 1.0, fillOpacity = 0.0,
                         highlightOptions = NULL,
-                        # label = paste0(geodata$HD_NAME, ' Health District'),
-                        # labelOptions = labelOptions(
-                        #   noHide = FALSE,
-                        #   style = list("font-weight" = "normal", padding = "3px 8px"),
-                        #   textsize = "15px",
-                        #   direction = "auto"),
                         options = pathOptions(className = paste0("HD-",gsub(' ', '-', geodata$HD_NAME)))) %>%
             addPolylines(data = freeways, 
                          group = "Display Freeways",
@@ -116,7 +110,7 @@ shinyServer(function(input, output) {
         delay(1, js$changeColors(hd_names, pal(rates())))
         yearLabelHTML <- paste0("<div><style>
         .leaflet-control.year-label { 
-          transform: translate(40%,0%);
+          transform: translate(20px,0px);
           position: fixed !important;
           left: 350;
           text-align: center;
@@ -131,27 +125,16 @@ shinyServer(function(input, output) {
         "</div>")
         delay(1, js$changeYear(yearLabelHTML))
         
-        # test
+        # add a label with the health district name and hypertension rate
         rateLabelHTML <- paste0("<div><style> .leaflet-control.rate-label { transform: translate(20px,-90px); position: fixed !important; left: 350; text-align: center; padding-left: 10px;  padding-right: 10px;  background: rgba(255,255,255,0.75); font-weight: bold; font-size: 24px; } </style>", 
                                 names(rates()), " Health District: ", 
-                                scales::percent(rates(), accuracy=1), "</div>")
+                                scales::percent(rates(), accuracy=0.1) %>% replace_na('Censored'),
+                                "</div>")
         delay(1, js$displayRates(hd_names, rateLabelHTML))
 
     })
     
-    # Add color when rates change
-    # (this bit is only useful for the animation)
-    # Input dependencies: measure, geography, year
-    # observe(label = 'Update colors', x={
-    #     
-    #     req(input$year)
-    # 
-    #     # Custom written function
-    #     hd_names <- paste0("HD-",gsub(' ', '-', names(rates())))
-    #     js$changeColors(hd_names, pal(rates()))
-    #     
-    # })
-    
+
     # Create plots for the time series tab
     output$timeSeriesPlots <- renderPlot({
       
