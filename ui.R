@@ -20,6 +20,17 @@ dashboardPage(
     tags$head(
       tags$style(
         HTML("
+          /* This bit fixes the legend for a continuous color scale. */
+          /* See https://github.com/rstudio/leaflet/issues/615 */
+          div.info.legend.leaflet-control br {
+            clear: both;
+          }
+          
+          /* Change the font size for the Map and Time-Series Plots titles */
+          .nav-tabs {
+            font-size: 18px
+          }
+        
           .skin-blue .main-header .logo {
             background-color: #0078B3;
               color: #fff;
@@ -57,9 +68,8 @@ dashboardPage(
       tabPanel("Map",
                fluidRow(
                  fillPage(
-                   tags$style(type = "text/css", "#map {height: calc(100vh - 80px) !important;} #geoSelect {height: calc(100vh - 100px) !important;}"),
-                   fillRow(flex=c(4,1), 
-                           leafletOutput('map', width="99%", height="100%")
+                   tags$style(type = "text/css", "#map {height: calc(100vh - 113px) !important;} #geoSelect {height: calc(100vh - 100px) !important;}"),
+                   fillRow(leafletOutput('map', width="100%", height="100%")
                    )
                  )
                )

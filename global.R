@@ -57,7 +57,8 @@ year_categories <- unique(rate_data$Year)
 
 # define the color palette and label format -------------------------------
 
-pal <- colorBin(palette = "BuPu", domain = rate_data$Percent, bins = 8)
+# pal <- colorBin(palette = "BuPu", domain = rate_data$Percent, bins = 8)
+pal <- colorNumeric(palette = "BuPu", domain = rate_data$Percent)
 
 lab <- labelFormat(suffix = '%', transform = function(x) x * 100)
 
@@ -110,7 +111,7 @@ displayRatesJS <- "shinyjs.displayRates = function(params) {
 	    // on mouseover, add the label
 	    element[0].onmouseover = ( function(new_html, currentDistrict) {
         return function() { 
-          this.setAttribute('stroke-width', 5)
+          this.setAttribute('stroke-width', 4)
           this.parentNode.appendChild(this);
           highlightedDistrict = currentDistrict;
           rateLabel = document.getElementsByClassName('rate-label');

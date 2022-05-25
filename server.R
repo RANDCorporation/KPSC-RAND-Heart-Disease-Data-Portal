@@ -30,7 +30,7 @@ shinyServer(function(input, output) {
     
     output$yearControls <- renderUI({
         sliderInput("year", "Year", min=min(year_categories), max=max(year_categories), 
-            value=min(year_categories),
+            value=max(year_categories),
             step=1, sep="", ticks=FALSE, 
             animate=animationOptions(interval=500))
     })
@@ -43,6 +43,7 @@ shinyServer(function(input, output) {
     
     # create base map
     output$map <- renderLeaflet({
+      
         leaflet(data = geodata, options = leafletOptions(zoomControl = FALSE)) %>%
             addMapPane(name = "polygons", zIndex = 410) %>% 
             addMapPane(name = "maplabels", zIndex = 420) %>% # higher zIndex means the labels are rendered on top of the polygons
@@ -50,7 +51,7 @@ shinyServer(function(input, output) {
             addProviderTiles("CartoDB.PositronOnlyLabels", 
                              options = leafletOptions(pane = "maplabels"),
                              group = "Place names") %>%
-            setView(lng=-118.4, lat=34.1, zoom=10) %>% 
+            setView(lng=-118.2, lat=34.1, zoom=10) %>% 
             addPolylines(data = freeways, 
                      group = "Display Freeways",
                      color = "#ff0000",
@@ -110,7 +111,8 @@ shinyServer(function(input, output) {
         
         # Add the proper shading
         hd_names <- paste0("HD-",gsub(' ', '-', names(rates())))
-        delay(1, js$changeColors(hd_names, pal(rates())))
+        # delay(1, js$changeColors(hd_names, pal(rates())))
+        js$changeColors(hd_names, pal(rates()))
         yearLabelHTML <- paste0("<div><style>
         .leaflet-control.year-label { 
           transform: translate(20px,0px);
@@ -126,14 +128,16 @@ shinyServer(function(input, output) {
         </style>", 
         input$year, 
         "</div>")
-        delay(1, js$changeYear(yearLabelHTML))
+        # delay(1, js$changeYear(yearLabelHTML))
+        js$changeYear(yearLabelHTML)
         
         # add a label with the health district name and hypertension rate
         rateLabelHTML <- paste0("<div><style> .leaflet-control.rate-label { transform: translate(20px,-90px); position: fixed !important; left: 350; text-align: center; padding-left: 10px;  padding-right: 10px;  background: rgba(255,255,255,0.75); font-weight: bold; font-size: 24px; } </style>", 
                                 names(rates()), " Health District: ", 
                                 scales::percent(rates(), accuracy=0.1) %>% replace_na('Censored'),
                                 "</div>")
-        delay(1, js$displayRates(hd_names, rateLabelHTML))
+        # delay(1, js$displayRates(hd_names, rateLabelHTML))
+        js$displayRates(hd_names, rateLabelHTML)
 
     })
     
