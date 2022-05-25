@@ -2,7 +2,7 @@
 # 
 # Define the server logic for the app
 #
-# Heart Disease Data Portal v 0.1 - initial testing
+# Heart Disease Data Portal v 0.2 - ready for QA review
 
 
 # Define server logic
@@ -35,9 +35,19 @@ shinyServer(function(input, output) {
             animate=animationOptions(interval=500))
     })
     
+    # intro note
+    output$intro_note <- renderUI({
+      HTML("<p style='margin-left:15px; margin-top:15px; margin-right:15px; margin-bottom:0px; color:black; font-size: 15px; font-weight: bold;'>Select a group to display hypertension rates by health district in LA County:</p>")
+    })
+    
     # sidebar note
     output$sidebar_note <- renderUI({
-        HTML("<p style='margin:15px; color:gray'>Hint: press the play button (above-right) to display an animation of hypertension rates over time.</p>")
+        HTML("<p style='margin-left:15px; margin-top:0px; margin-right:15px; margin-bottom:0px; color:black'>Press the play button (above-right) to display an animation of hypertension rates over time.</p>")
+    })
+    
+    # sidebar footnote
+    output$sidebar_footnote <- renderUI({
+      HTML("<p style='margin:15px; color:black; position: absolute; bottom: 0'>*Hypertension rates are not displayed when the number of Kaiser Permanente patients in a given area is too low. This is done to protect patient privacy.</p>")
     })
     
     
@@ -70,7 +80,7 @@ shinyServer(function(input, output) {
                       values = ~rate_data$Percent,
                       labFormat = lab,
                       title = "Hypertension Rate",
-                      na.label = "Censored",
+                      na.label = "Not Available*",
                       opacity = 0.6) %>%
             addLayersControl(overlayGroups = c("Display Freeways"),
                              options = layersControlOptions(collapsed = FALSE)) %>%
@@ -134,7 +144,7 @@ shinyServer(function(input, output) {
         # add a label with the health district name and hypertension rate
         rateLabelHTML <- paste0("<div><style> .leaflet-control.rate-label { transform: translate(20px,-90px); position: fixed !important; left: 350; text-align: center; padding-left: 10px;  padding-right: 10px;  background: rgba(255,255,255,0.75); font-weight: bold; font-size: 24px; } </style>", 
                                 names(rates()), " Health District: ", 
-                                scales::percent(rates(), accuracy=0.1) %>% replace_na('Censored'),
+                                scales::percent(rates(), accuracy=0.1) %>% replace_na('Not Available*'),
                                 "</div>")
         # delay(1, js$displayRates(hd_names, rateLabelHTML))
         js$displayRates(hd_names, rateLabelHTML)

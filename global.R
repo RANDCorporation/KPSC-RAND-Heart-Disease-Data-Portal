@@ -2,7 +2,7 @@
 #
 # Define global objects for the Shiny app.
 #
-# Heart Disease Data Portal v 0.1 - initial testing
+# Heart Disease Data Portal v 0.2 - ready for QA review
 
 # load libraries ----------------------------------------------------------
 
@@ -57,8 +57,8 @@ year_categories <- unique(rate_data$Year)
 
 # define the color palette and label format -------------------------------
 
-# pal <- colorBin(palette = "BuPu", domain = rate_data$Percent, bins = 8)
-pal <- colorNumeric(palette = "BuPu", domain = rate_data$Percent)
+pal <- colorBin(palette = "BuPu", domain = rate_data$Percent, bins = 8)
+# pal <- colorNumeric(palette = "BuPu", domain = rate_data$Percent)
 
 lab <- labelFormat(suffix = '%', transform = function(x) x * 100)
 

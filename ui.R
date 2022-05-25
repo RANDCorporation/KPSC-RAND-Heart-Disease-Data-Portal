@@ -2,18 +2,21 @@
 #
 # Define the user interface of the app.
 #
-# Heart Disease Data Portal v 0.1 - initial testing
+# Heart Disease Data Portal v 0.2 - ready for QA review
 
 dashboardPage(
-  dashboardHeader(title = "Kaiser Permanente - RAND Heart Disease Data Portal", titleWidth = "100%"),
+  title = 'KP-RAND Heart Disease Data Portal',
+  dashboardHeader(title = HTML("<div style='float: right;'>Kaiser Permanente - RAND</div><div style='float: left;'>Heart Disease Data Portal<div>"), titleWidth = "100%"),
   ## Sidebar content
   dashboardSidebar(
     width = 300,
+    htmlOutput("intro_note"),
     uiOutput("ageControls"),
     uiOutput("genderControls"),
     uiOutput("raceControls"),
     uiOutput("yearControls"),
-    htmlOutput("sidebar_note")
+    htmlOutput("sidebar_note"),
+    htmlOutput("sidebar_footnote")
   ),
   ## Body content
   dashboardBody(
@@ -35,7 +38,9 @@ dashboardPage(
             background-color: #0078B3;
               color: #fff;
               border-bottom: 0 solid transparent;
-            text-align: left;
+            font-weight: bold;
+            font-family: Arial;
+            /* text-align: left; */
           }
           
           .skin-blue .main-header .navbar {
@@ -68,7 +73,7 @@ dashboardPage(
       tabPanel("Map",
                fluidRow(
                  fillPage(
-                   tags$style(type = "text/css", "#map {height: calc(100vh - 113px) !important;} #geoSelect {height: calc(100vh - 100px) !important;}"),
+                   tags$style(type = "text/css", "#map {height: calc(100vh - 98px) !important;} #geoSelect {height: calc(100vh - 100px) !important;}"),
                    fillRow(leafletOutput('map', width="100%", height="100%")
                    )
                  )
