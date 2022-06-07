@@ -2,10 +2,10 @@
 #
 # Define the user interface of the app.
 #
-# Heart Disease Data Portal v 0.2 - ready for QA review
+# Heart Disease Data Portal v 0.3 - incorporating QA edits
 
 dashboardPage(
-  title = 'KP-RAND Heart Disease Data Portal',
+  title = 'KPSC-RAND Heart Disease Data Portal',
   dashboardHeader(title = HTML("<div style='float: right;'>Kaiser Permanente - RAND</div><div style='float: left;'>Heart Disease Data Portal<div>"), titleWidth = "100%"),
   ## Sidebar content
   dashboardSidebar(
@@ -20,55 +20,12 @@ dashboardPage(
   ),
   ## Body content
   dashboardBody(
-    tags$head(
-      tags$style(
-        HTML("
-          /* This bit fixes the legend for a continuous color scale. */
-          /* See https://github.com/rstudio/leaflet/issues/615 */
-          div.info.legend.leaflet-control br {
-            clear: both;
-          }
-          
-          /* Change the font size for the Map and Time-Series Plots titles */
-          .nav-tabs {
-            font-size: 18px
-          }
-        
-          .skin-blue .main-header .logo {
-            background-color: #0078B3;
-              color: #fff;
-              border-bottom: 0 solid transparent;
-            font-weight: bold;
-            font-family: Arial;
-            /* text-align: left; */
-          }
-          
-          .skin-blue .main-header .navbar {
-            background-color: #0078B3;
-          }
-          
-          .control-label {
-            color: #000;
-          }
-          
-          .glyphicon {
-            color:#000
-          }
-          
-          .skin-blue .left-side, .skin-blue .main-sidebar, .skin-blue .wrapper {
-            /* background-color: #222d32; */
-              /* background-color: #D3D6DC; */
-              background-color: #E9EBEE; color: #000 !important;
-          }
-        ")
-      )
-      # tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
-    ),
+    tags$head(tags$style(includeCSS("www/HDDP.css"))),
     useShinyjs(),
-    extendShinyjs(text=defineGlobalsJS, functions="defineGlobals"),
-    extendShinyjs(text=changeColorsJS, functions="changeColors"),
-    extendShinyjs(text=changeYearJS, functions="changeYear"),
-    extendShinyjs(text=displayRatesJS, functions="displayRates"),
+    extendShinyjs(script='defineGlobals.js', functions="defineGlobals"),
+    extendShinyjs(script='changeColors.js', functions='changeColors'),
+    extendShinyjs(script='changeYear.js', functions="changeYear"),
+    extendShinyjs(script='displayRates.js', functions="displayRates"),
     tabsetPanel(
       tabPanel("Map",
                fluidRow(

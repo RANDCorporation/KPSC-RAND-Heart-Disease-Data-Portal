@@ -1,0 +1,47 @@
+/* This bit fixes the legend for a continuous color scale. */
+/* See https://github.com/rstudio/leaflet/issues/615 */
+div.info.legend.leaflet-control br {
+          clear: both;
+}
+
+/* Change the font size for the Map and Time-Series Plots titles */
+.nav-tabs {
+          font-size: 18px
+}
+
+.skin-blue .main-header .logo {
+          background-color: #0078B3;
+          color: #fff;
+          border-bottom: 0 solid transparent;
+          font-weight: bold;
+          font-family: Arial;
+          /* text-align: left; */
+}
+
+.skin-blue .main-header .navbar {
+          background-color: #0078B3;
+}
+
+.control-label {
+          color: #000;
+}
+
+.glyphicon {
+          color:#000
+}
+
+.skin-blue .left-side, .skin-blue .main-sidebar, .skin-blue .wrapper {
+          /* background-color: #222d32; */
+          /* background-color: #D3D6DC; */
+          background-color: #E9EBEE; color: #000 !important;
+}
+
+section.sidebar .shiny-input-container {
+          padding: 0px 15px 0px 15px;
+          margin-bottom: 10px;
+          white-space: normal;
+}
+
+#ageControls {
+  margin-top: 10px;
+}

@@ -2,7 +2,7 @@
 # 
 # Define the server logic for the app
 #
-# Heart Disease Data Portal v 0.2 - ready for QA review
+# Heart Disease Data Portal v 0.3 - incorporating QA edits
 
 
 # Define server logic
@@ -42,14 +42,13 @@ shinyServer(function(input, output) {
     
     # sidebar note
     output$sidebar_note <- renderUI({
-        HTML("<p style='margin-left:15px; margin-top:0px; margin-right:15px; margin-bottom:0px; color:black'>Press the play button (above-right) to display an animation of hypertension rates over time.</p>")
+        HTML("<p style='margin-left:15px; margin-top:0px; margin-right:15px; margin-bottom:0px; line-height: 1.3; color:black'>Press the play button (above-right) to display an animation of hypertension rates over time.</p>")
     })
     
     # sidebar footnote
     output$sidebar_footnote <- renderUI({
-      HTML("<p style='margin:15px; color:black; position: absolute; bottom: 0'>*Hypertension rates are not displayed when the number of Kaiser Permanente patients in a given area is too low. This is done to protect patient privacy.</p>")
+      HTML("<p style='margin:15px; font-size: 13.5px; line-height: 1.3; color:black; position: absolute; bottom: 0'>*Rates are not displayed when the number of Kaiser Permanente patients in a given area is too low. This is done to protect patient privacy.</p>")
     })
-    
     
     # create base map
     output$map <- renderLeaflet({
@@ -121,7 +120,7 @@ shinyServer(function(input, output) {
         
         # Add the proper shading
         hd_names <- paste0("HD-",gsub(' ', '-', names(rates())))
-        # delay(1, js$changeColors(hd_names, pal(rates())))
+        
         js$changeColors(hd_names, pal(rates()))
         yearLabelHTML <- paste0("<div><style>
         .leaflet-control.year-label { 
@@ -138,7 +137,7 @@ shinyServer(function(input, output) {
         </style>", 
         input$year, 
         "</div>")
-        # delay(1, js$changeYear(yearLabelHTML))
+        
         js$changeYear(yearLabelHTML)
         
         # add a label with the health district name and hypertension rate
@@ -146,7 +145,7 @@ shinyServer(function(input, output) {
                                 names(rates()), " Health District: ", 
                                 scales::percent(rates(), accuracy=0.1) %>% replace_na('Not Available*'),
                                 "</div>")
-        # delay(1, js$displayRates(hd_names, rateLabelHTML))
+        
         js$displayRates(hd_names, rateLabelHTML)
 
     })
@@ -156,7 +155,7 @@ shinyServer(function(input, output) {
     output$timeSeriesPlots <- renderPlot({
       
       # If Shiny tries to proceed with any of these missing, it'll throw an error and the app will break.
-      req(input$age, input$gender, input$race, input$year)
+      req(input$age, input$gender, input$race)
       
       # Filter rate data to the selected year
       plotData <- rate_data %>% filter(Age==input$age,
@@ -172,6 +171,11 @@ shinyServer(function(input, output) {
       censored <- plotData %>% filter(is.na(Percent)) %>% pull(HD_NAME) %>% unique()
       plotData <- plotData %>% filter(!(HD_NAME %in% censored))
       
+      # if there are no districts remaining, display an error message.
+      if (nrow(plotData)==0) {
+        validate("Sorry - there are no health districts with enough patients to display data for the selected group.")
+      }
+      
       plotData %>% 
         ggplot(aes(x=Year, y=Percent, color=Entity)) +
         geom_line() +
@@ -179,7 +183,7 @@ shinyServer(function(input, output) {
         scale_y_continuous(labels = scales::label_percent(accuracy = 1)) + 
         scale_color_manual(values = c("black", "steelblue")) + 
         facet_wrap(vars(HD_NAME), ncol=4) + 
-        labs(caption = ifelse(length(censored > 0), "Note: Health Districts with censored values are not displayed.", "")) + 
+        labs(caption = ifelse(length(censored > 0), "Note: Health districts with too few patients are excluded.", "")) + 
         theme_minimal() + 
         theme(plot.caption = element_text(hjust = 0, size=12))
       
