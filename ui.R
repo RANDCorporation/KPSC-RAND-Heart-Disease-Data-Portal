@@ -6,16 +6,19 @@
 
 dashboardPage(
   title = 'KPSC-RAND Heart Disease Data Portal',
-  dashboardHeader(title = HTML("<div style='float: right;'>Kaiser Permanente - RAND</div><div style='float: left;'>Heart Disease Data Portal<div>"), titleWidth = "100%"),
+  dashboardHeader(title = HTML("<div style='float: left;'>KPSC-RAND Heart Disease Data Portal<div>"), titleWidth = "100%"),
   ## Sidebar content
   dashboardSidebar(
-    width = 300,
-    htmlOutput("intro_note"),
+    tags$head(tags$style(type='text/css', ".slider-animate-button { float: left; font-size: 15pt; margin-top: 3px !important; } .sidebar .irs-min, .sidebar .irs-max {color: #fff !important;}")),
+    width = 355,
+    htmlOutput("sidebar_note1"),
+    htmlOutput("sidebar_note2"),
     uiOutput("ageControls"),
     uiOutput("genderControls"),
     uiOutput("raceControls"),
+    htmlOutput("sidebar_note3"),
+    htmlOutput("sidebar_note4"),
     uiOutput("yearControls"),
-    htmlOutput("sidebar_note"),
     htmlOutput("sidebar_footnote")
   ),
   ## Body content
@@ -39,7 +42,7 @@ dashboardPage(
       tabPanel("Time-Series Plots",
                fluidRow(
                  fillPage(
-                   tags$style(type = "text/css", "#timeSeriesPlots {height: calc(100vh - 110px) !important;}"),
+                   tags$style(type = "text/css", "#timeSeriesPlots {height: calc(100vh - 100px) !important;}"),
                    plotOutput("timeSeriesPlots", height = "100%"))
                )
       )

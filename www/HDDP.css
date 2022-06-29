@@ -26,6 +26,13 @@ div.info.legend.leaflet-control br {
           color: #000;
 }
 
+/*
+.slider-animate-button {
+  float: left;
+  font-size: 40pt !important;
+}
+*/
+
 .glyphicon {
           color:#000
 }

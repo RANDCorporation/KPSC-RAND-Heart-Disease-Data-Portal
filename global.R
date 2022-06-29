@@ -30,7 +30,7 @@ geodata <- st_read('data/geodata/HD_2012_WGS84/Health_Districts_2012_WGS84.shp')
 # LA County freeway boundaries
 freeways <- st_read('data/geodata/Master_Plan_of_Highways/Master_Plan_of_Highways.shp')
 
-# hypertension rates
+# hypertension prevalence
 rate_data <- read_excel('data/AHA file with publication score_Pass1_11Apr2022.xlsx', na='N/A')
 rate_data %<>% rename(Year = year,
                       HD_NAME = HD2012,

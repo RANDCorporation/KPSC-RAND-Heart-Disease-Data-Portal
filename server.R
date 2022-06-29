@@ -35,19 +35,29 @@ shinyServer(function(input, output) {
             animate=animationOptions(interval=500))
     })
     
+    # sidebar header
+    output$sidebar_note1 <- renderUI({
+      HTML("<p style='margin-left:15px; margin-top:15px; margin-right:15px; margin-bottom:0px; line-height: 1.3; color:black'>The Heart Disease Data Portal is a collaboration between Kaiser Permanente Southern California (KPSC) and the RAND Corporation, and is designed to inform and support decisionmaking for public health by facilitating exploring of hypertension prevalence rates in each of the 26 health districts in Los Angeles County.</p>")
+    })
+    
     # intro note
-    output$intro_note <- renderUI({
-      HTML("<p style='margin-left:15px; margin-top:15px; margin-right:15px; margin-bottom:0px; color:black; font-size: 15px; font-weight: bold;'>Select a group to display hypertension rates by health district in LA County:</p>")
+    output$sidebar_note2 <- renderUI({
+      HTML("<p style='margin-left:15px; margin-top:15px; margin-right:15px; margin-bottom:0px; color:black; font-size: 15px; font-weight: bold;'>Select a group to display hypertension prevalence by health district in LA County:</p>")
     })
     
     # sidebar note
-    output$sidebar_note <- renderUI({
-        HTML("<p style='margin-left:15px; margin-top:0px; margin-right:15px; margin-bottom:0px; line-height: 1.3; color:black'>Press the play button (above-right) to display an animation of hypertension rates over time.</p>")
+    output$sidebar_note3 <- renderUI({
+      HTML("<p style='margin-left:15px; margin-top:15px; margin-right:15px; margin-bottom:15px; line-height: 1.3; color:black; font-style: italic'>Mapping tip: Only select two of the three groups in the drop-down menus at any time. Otherwise the health district population sizes become too small to display.</p>")
+    })
+    
+    # sidebar_note4
+    output$sidebar_note4 <- renderUI({
+      HTML("<p style='margin-left:15px; margin-top:15px; margin-right:15px; margin-bottom:15px; color:black; font-size: 15px; font-weight: bold;'>Select a year to display, or press play to display an animation of prevalence over time:</p>")
     })
     
     # sidebar footnote
     output$sidebar_footnote <- renderUI({
-      HTML("<p style='margin:15px; font-size: 13.5px; line-height: 1.3; color:black; position: absolute; bottom: 0'>*Rates are not displayed when the number of Kaiser Permanente patients in a given area is too low. This is done to protect patient privacy.</p>")
+      HTML("<p style='margin:15px; font-size: 13.5px; line-height: 1.3; color:black; position: absolute; bottom: 0'>*Prevalence is not displayed if the underlying numbers are too small to avoid inadvertent disclosure of anyone’s hypertension status.</p>")
     })
     
     # create base map
@@ -78,7 +88,7 @@ shinyServer(function(input, output) {
                       pal = pal,
                       values = ~rate_data$Percent,
                       labFormat = lab,
-                      title = "Hypertension Rate",
+                      title = "Hypertension Prevalence",
                       na.label = "Not Available*",
                       opacity = 0.6) %>%
             addLayersControl(overlayGroups = c("Display Freeways"),
@@ -86,7 +96,7 @@ shinyServer(function(input, output) {
             addControl(tags$div(
               tags$style(HTML("")), HTML("")
               ), position = "topleft", className="year-label") %>%
-            addControl(HTML("<div><style> .leaflet-control.rate-label { transform: translate(20px,-90px); position: fixed !important; left: 350; text-align: center; padding-left: 10px;  padding-right: 10px;  background: rgba(255,255,255,0.75); font-weight: bold; font-size: 24px; } </style>Mouse over a district to display rates</div>"), 
+            addControl(HTML("<div><style> .leaflet-control.rate-label { transform: translate(20px,-90px); position: fixed !important; left: 350; text-align: center; padding-left: 10px;  padding-right: 10px;  background: rgba(255,255,255,0.75); font-weight: bold; font-size: 24px; } </style>Mouse over a district to display prevalence</div>"), 
                        position = "bottomleft", className="rate-label") %>%
             htmlwidgets::onRender("function(el, x) {
               L.control.zoom({ position: 'topright' }).addTo(this)
@@ -140,7 +150,7 @@ shinyServer(function(input, output) {
         
         js$changeYear(yearLabelHTML)
         
-        # add a label with the health district name and hypertension rate
+        # add a label with the health district name and hypertension prevalence
         rateLabelHTML <- paste0("<div><style> .leaflet-control.rate-label { transform: translate(20px,-90px); position: fixed !important; left: 350; text-align: center; padding-left: 10px;  padding-right: 10px;  background: rgba(255,255,255,0.75); font-weight: bold; font-size: 24px; } </style>", 
                                 names(rates()), " Health District: ", 
                                 scales::percent(rates(), accuracy=0.1) %>% replace_na('Not Available*'),
