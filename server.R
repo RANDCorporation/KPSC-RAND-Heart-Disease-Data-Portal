@@ -35,29 +35,38 @@ shinyServer(function(input, output) {
             animate=animationOptions(interval=500))
     })
     
-    # sidebar header
+
+    # Notes for the sidebar
     output$sidebar_note1 <- renderUI({
-      HTML("<p style='margin-left:15px; margin-top:15px; margin-right:15px; margin-bottom:0px; line-height: 1.3; color:black'>The Heart Disease Data Portal is a collaboration between Kaiser Permanente Southern California (KPSC) and the RAND Corporation, and is designed to inform and support decisionmaking for public health by facilitating exploring of hypertension prevalence rates in each of the 26 health districts in Los Angeles County.</p>")
-    })
-    
-    # intro note
-    output$sidebar_note2 <- renderUI({
       HTML("<p style='margin-left:15px; margin-top:15px; margin-right:15px; margin-bottom:0px; color:black; font-size: 15px; font-weight: bold;'>Select a group to display hypertension prevalence by health district in LA County:</p>")
     })
     
     # sidebar note
-    output$sidebar_note3 <- renderUI({
-      HTML("<p style='margin-left:15px; margin-top:15px; margin-right:15px; margin-bottom:15px; line-height: 1.3; color:black; font-style: italic'>Mapping tip: Only select two of the three groups in the drop-down menus at any time. Otherwise the health district population sizes become too small to display.</p>")
+    output$sidebar_note2 <- renderUI({
+      HTML("<p style='margin-left:15px; margin-top:15px; margin-right:15px; margin-bottom:15px; line-height: 1.3; color:black; font-style: italic'>Mapping tip: Only select two of the three groups in the drop-down menus at any time. Otherwise the health district population sizes become too small to display. </p>")
     })
     
     # sidebar_note4
-    output$sidebar_note4 <- renderUI({
+    output$sidebar_note3 <- renderUI({
       HTML("<p style='margin-left:15px; margin-top:15px; margin-right:15px; margin-bottom:15px; color:black; font-size: 15px; font-weight: bold;'>Select a year to display, or press play to display an animation of prevalence over time:</p>")
     })
     
     # sidebar footnote
     output$sidebar_footnote <- renderUI({
       HTML("<p style='margin:15px; font-size: 13.5px; line-height: 1.3; color:black; position: absolute; bottom: 0'>*Prevalence is not displayed if the underlying numbers are too small to avoid inadvertent disclosure of anyone’s hypertension status.</p>")
+    })
+    
+    # Notes for the About tab
+    output$about_note1 <- renderUI({
+      HTML("<p style='margin:15px; font-size: 13.5px; line-height: 1.3'>The Heart Disease Data Portal is a collaboration between Kaiser Permanente Southern California (KPSC) and the RAND Corporation, and is designed to inform and support decisionmaking for public health by facilitating exploring of hypertension prevalence rates in each of the 26 health districts in Los Angeles County.</p>")
+    })
+    
+    output$about_note2 <- renderUI({
+      HTML("<p style='margin:15px; font-size: 13.5px; line-height: 1.3'>For more information, see [insert KPSC landing page URL here].</p>")
+    })
+    
+    output$about_note3 <- renderUI({
+      HTML("<p style='margin:15px; font-size: 13.5px; line-height: 1.3'>Code for the app is available at <a href='https://github.com/RANDCorporation/KPSC-RAND-Heart-Disease-Data-Portal'>https://github.com/RANDCorporation/KPSC-RAND-Heart-Disease-Data-Portal</a>.</p>")
     })
     
     # create base map

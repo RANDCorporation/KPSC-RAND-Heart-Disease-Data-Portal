@@ -10,14 +10,13 @@ dashboardPage(
   ## Sidebar content
   dashboardSidebar(
     tags$head(tags$style(type='text/css', ".slider-animate-button { float: left; font-size: 15pt; margin-top: 3px !important; } .sidebar .irs-min, .sidebar .irs-max {color: #fff !important;}")),
-    width = 355,
+    width = 340,
     htmlOutput("sidebar_note1"),
-    htmlOutput("sidebar_note2"),
     uiOutput("ageControls"),
     uiOutput("genderControls"),
     uiOutput("raceControls"),
+    htmlOutput("sidebar_note2"),
     htmlOutput("sidebar_note3"),
-    htmlOutput("sidebar_note4"),
     uiOutput("yearControls"),
     htmlOutput("sidebar_footnote")
   ),
@@ -44,6 +43,15 @@ dashboardPage(
                  fillPage(
                    tags$style(type = "text/css", "#timeSeriesPlots {height: calc(100vh - 100px) !important;}"),
                    plotOutput("timeSeriesPlots", height = "100%"))
+               )
+      ),
+      tabPanel("About",
+               fluidRow(
+                 column(width=5,
+                        htmlOutput("about_note1"),
+                        htmlOutput("about_note2"),
+                        htmlOutput("about_note3")
+                 )
                )
       )
     )
