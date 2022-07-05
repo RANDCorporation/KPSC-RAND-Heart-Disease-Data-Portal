@@ -62,7 +62,7 @@ shinyServer(function(input, output) {
     })
     
     output$about_note2 <- renderUI({
-      HTML("<p style='margin:15px; font-size: 13.5px; line-height: 1.3'>For more information, see [insert KPSC landing page URL here].</p>")
+      HTML("<p style='margin:15px; font-size: 13.5px; line-height: 1.3'>For more information, see <a href='https://kp-scalresearch.org/heart-disease-mapping-portal/'>https://kp-scalresearch.org/heart-disease-mapping-portal/</a>.</p>")
     })
     
     output$about_note3 <- renderUI({
