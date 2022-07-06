@@ -25,7 +25,7 @@ The shapefiles used in this app were downloaded from the City of Los Angeles Geo
 
 ## License
 
-All code in this project is Copyright (C) The RAND Corporation, and is licensed under the GPL-v3.
+All code in this project is Copyright (C) The RAND Corporation, 2022, and is licensed under the GPL-v3.
 
 ## Contact
 
