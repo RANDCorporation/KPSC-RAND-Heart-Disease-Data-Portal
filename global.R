@@ -2,7 +2,7 @@
 #
 # Define global objects for the Shiny app.
 #
-# Heart Disease Data Portal v 0.3 - incorporating QA edits
+# Heart Disease Data Portal v 1.0 - Pushing to GitHub
 
 # load libraries ----------------------------------------------------------
 
